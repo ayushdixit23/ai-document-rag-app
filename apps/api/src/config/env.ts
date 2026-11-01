@@ -24,10 +24,22 @@ export const NODE_ENV = getEnvVariable('NODE_ENV', 'development');
 export const DATABASE_URL = getEnvVariable('DATABASE_URL');
 export const DATABASE_POOL_MAX = parseInt(getEnvVariable('DATABASE_POOL_MAX', '10'), 10);
 
+// RAG integrations
+export const getR2Config = () => ({
+  accountId: getEnvVariable('R2_ACCOUNT_ID'),
+  accessKeyId: getEnvVariable('R2_ACCESS_KEY_ID'),
+  secretAccessKey: getEnvVariable('R2_SECRET_ACCESS_KEY'),
+  bucketName: getEnvVariable('R2_BUCKET_NAME'),
+});
+export const GEMINI_API_KEY = getEnvVariable('GEMINI_API_KEY');
+export const GEMINI_CHAT_MODEL = getEnvVariable('GEMINI_CHAT_MODEL', 'gemini-2.5-flash');
+export const GEMINI_FAST_MODEL = getEnvVariable('GEMINI_FAST_MODEL', 'gemini-2.5-flash-lite');
+export const GEMINI_EMBED_MODEL = getEnvVariable('GEMINI_EMBED_MODEL', 'gemini-embedding-001');
+
 // CORS Configuration
 export const ALLOWED_ORIGINS = getEnvVariable(
   'ALLOWED_ORIGINS',
-  'http://localhost:3000,http://localhost:3001',
+  'http://localhost:3000,http://localhost:3001,http://localhost:5001',
 )
   .split(',')
   .map((origin) => origin.trim())

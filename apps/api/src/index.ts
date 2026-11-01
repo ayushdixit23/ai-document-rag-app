@@ -3,6 +3,7 @@ import type { Server } from 'http';
 import createApp from './app.js';
 import { NODE_ENV, PORT } from './config/env.js';
 import { connectDb } from './db/index.js';
+import { startBoss } from './lib/queue/boss.js';
 import { setupGracefulShutdown } from './utils/gracefulShutdown.js';
 import { logger } from './utils/logger.js';
 
@@ -34,6 +35,7 @@ const startServer = async (): Promise<void> => {
     setupGracefulShutdown(server);
 
     await connectDb();
+    await startBoss();
   } catch (error) {
     logger.fatal({ err: error }, 'Failed to start server');
     process.exit(1);

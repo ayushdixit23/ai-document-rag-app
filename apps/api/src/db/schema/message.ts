@@ -1,9 +1,16 @@
-import { bigint, pgEnum, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, integer, pgEnum, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 
 import { user } from './auth.js';
 import { chat } from './chats.js';
 
 export const roleEnum = pgEnum('role', ['user', 'assistant']);
+export const documentStatusEnum = pgEnum('document_status', [
+  'uploading',
+  'pending',
+  'processing',
+  'ready',
+  'failed',
+]);
 
 export const message = pgTable('message', {
   id: text('id').primaryKey(),
@@ -28,6 +35,10 @@ export const document = pgTable('document', {
   mimeType: text('mime_type').notNull(),
   size: bigint('size', { mode: 'number' }).notNull(),
   storageKey: text('storage_key').notNull(),
+  status: documentStatusEnum('status').default('uploading').notNull(),
+  errorMessage: text('error_message'),
+  pageCount: integer('page_count'),
+  chunkCount: integer('chunk_count'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 
   updatedAt: timestamp('updated_at')

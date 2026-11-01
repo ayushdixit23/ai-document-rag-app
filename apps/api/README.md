@@ -111,6 +111,16 @@ pnpm db:migrate   # Run migrations
 pnpm db:studio    # Drizzle Studio
 ```
 
+## RAG foundation setup
+
+Add `DATABASE_URL_DIRECT` (Neon direct, without `-pooler`) and the R2 values from
+`env.example` to `apps/api/.env`. The API uses the pooled `DATABASE_URL` for normal
+queries and the direct URL for pg-boss. Gemini model names have defaults, but
+`GEMINI_API_KEY` is required.
+
+The `0003` migration enables pgvector and adds document chunks, citations, and
+processing state. Apply it from `apps/api` with `pnpm db:migrate` on a new database.
+
 ## Testing
 
 ```bash

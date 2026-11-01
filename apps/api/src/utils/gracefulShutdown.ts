@@ -1,5 +1,6 @@
 import { Server } from 'http';
 
+import { stopBoss } from '../lib/queue/boss.js';
 import { logger } from './logger.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -39,6 +40,7 @@ export const setupGracefulShutdown = (server: Server): void => {
       try {
         await closeServer(server);
         logger.info('HTTP server closed');
+        await stopBoss();
         const { disconnectDb } = await import('../db/index.js');
         await disconnectDb();
         logger.info('All connections closed, exiting process');

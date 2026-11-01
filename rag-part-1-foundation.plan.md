@@ -1,31 +1,31 @@
 ---
 name: RAG Part 1 — Foundation
 overview: 'Infrastructure only: packages, env vars, pgvector, Drizzle schema changes, R2 client + bucket CORS, pg-boss boot. No feature endpoints, no UI. Deliverable: the API is ready to build upload/ingest/chat on top of.'
-status: pending
+status: in_progress
 depends_on: none
 parent_plan: langchain-first_rag_682de98b.plan.md
 todos:
   - id: packages
     content: 'Install LangChain, AWS SDK, pg-boss, file-type packages'
-    status: pending
+    status: completed
   - id: env
     content: 'New env vars in env.example + apps/api/src/config/env.ts'
-    status: pending
+    status: completed
   - id: pgvector
     content: 'Enable pgvector extension on Neon (one-time)'
-    status: pending
+    status: completed
   - id: schema
     content: 'Drizzle schema: document status fields, document_chunk, message_citation, chat.summarizedUntil'
-    status: pending
+    status: completed
   - id: r2
     content: 'R2 client (apps/api/src/lib/storage/r2.ts) + one-time bucket CORS'
     status: pending
   - id: pgboss
     content: 'pg-boss boot (apps/api/src/lib/queue/boss.ts) wired into src/index.ts with graceful shutdown'
-    status: pending
+    status: completed
   - id: rag-config
     content: 'apps/api/src/services/rag/config.ts constants + models.ts model instances'
-    status: pending
+    status: completed
 ---
 
 # RAG Part 1: Foundation
@@ -59,7 +59,7 @@ Run once against the Neon database:
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-Verify `\dx` shows `vector` before running `db:push`.
+The committed `0003` migration also enables the extension for fresh databases.
 
 ## 4. Drizzle schema changes
 
@@ -73,12 +73,12 @@ Verify `\dx` shows `vector` before running `db:push`.
 
 Drizzle vector column: use Drizzle's native `vector` type helper if the installed version supports it; otherwise a minimal `customType`. Keep it in one place.
 
-Apply with `pnpm db:push` from `apps/api`.
+Apply with `pnpm db:migrate` from `apps/api`.
 
 ## 5. R2 client + bucket CORS
 
 - New [apps/api/src/lib/storage/r2.ts](apps/api/src/lib/storage/r2.ts): `S3Client` pointed at the R2 S3 endpoint (`https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`) with `get`, `head`, `put` (presign via `@aws-sdk/s3-request-presigner`), `delete`. Object key format lives here too: `users/{userId}/documents/{documentId}/{safeFileName}` — the client never sends a raw key.
-- One-time bucket CORS (Cloudflare dashboard or a small script): allow `PUT` from the web origins (`ALLOWED_ORIGINS`) with the `Content-Type` header.
+- One-time bucket CORS (`pnpm r2:setup` from `apps/api`): allow `PUT` from the web origins (`ALLOWED_ORIGINS`) with the `Content-Type` header.
 - Smoke check: `headBucket`-equivalent (`HeadObject` on a temp key or list) succeeds with the env creds.
 
 ## 6. pg-boss boot
@@ -95,7 +95,7 @@ Apply with `pnpm db:push` from `apps/api`.
 ## 8. Definition of done
 
 - `pnpm install` resolves cleanly; `pnpm validate` passes (lint, format:check, check-types)
-- `pnpm db:push` applies the new schema without error; pgvector extension confirmed
+- `pnpm db:migrate` applies the new schema without error; pgvector extension confirmed
 - API boots with a "pg-boss started" log and shuts down cleanly on SIGINT
 - R2 smoke check succeeds; bucket CORS rule exists
 - No routes added, no UI touched
