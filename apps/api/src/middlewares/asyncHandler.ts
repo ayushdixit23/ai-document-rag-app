@@ -3,11 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 /**
  * Type for async route handlers
  */
-type AsyncRequestHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Response | Promise<Response> | undefined;
+type AsyncRequestHandler = (req: Request, res: Response, next: NextFunction) => unknown;
 
 /**
  * Wrapper for async route handlers to catch errors and pass them to error middleware

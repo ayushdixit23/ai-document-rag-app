@@ -1,6 +1,6 @@
 import { PgBoss } from 'pg-boss';
 
-import { DATABASE_URL } from '../../config/env.js';
+import { DATABASE_URL_DIRECT } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 
 export const JOB_NAMES = {
@@ -9,7 +9,10 @@ export const JOB_NAMES = {
   STALE_UPLOAD_CLEANUP: 'stale-upload-cleanup',
 } as const;
 
-export const boss = new PgBoss({ connectionString: DATABASE_URL });
+export const boss = new PgBoss({ connectionString: DATABASE_URL_DIRECT });
+boss.on('error', (error) => {
+  logger.error({ err: error }, 'pg-boss error');
+});
 
 let started = false;
 

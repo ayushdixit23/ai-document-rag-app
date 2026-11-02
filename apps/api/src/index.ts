@@ -4,6 +4,7 @@ import createApp from './app.js';
 import { NODE_ENV, PORT } from './config/env.js';
 import { connectDb } from './db/index.js';
 import { startBoss } from './lib/queue/boss.js';
+import { registerRagWorkers } from './services/rag/workers.js';
 import { setupGracefulShutdown } from './utils/gracefulShutdown.js';
 import { logger } from './utils/logger.js';
 
@@ -36,6 +37,7 @@ const startServer = async (): Promise<void> => {
 
     await connectDb();
     await startBoss();
+    await registerRagWorkers();
   } catch (error) {
     logger.fatal({ err: error }, 'Failed to start server');
     process.exit(1);

@@ -10,6 +10,7 @@
     "GOOGLE_CLIENT_SECRET",
     "RESEND_API_KEY",
     "EMAIL_FROM",
+    "DATABASE_URL_DIRECT",
     "NEXT_PUBLIC_API_URL",
     "NEXT_PUBLIC_WEB_URL"
   ],
@@ -30,6 +31,7 @@
       "cache": false
     },
     "format:check": {},
+    "test": {},
     "dev": {
       "cache": false,
       "persistent": true

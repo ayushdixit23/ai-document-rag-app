@@ -10,6 +10,10 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction,
 ): void => {
+  if (res.headersSent) {
+    _next(err);
+    return;
+  }
   const normalizedError = normalizeError(err);
 
   logger.error(

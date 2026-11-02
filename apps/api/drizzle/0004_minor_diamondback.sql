@@ -1,0 +1,1 @@
+ALTER TABLE "chat" ADD COLUMN "summarized_until_message_id" text;

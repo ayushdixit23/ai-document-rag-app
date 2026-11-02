@@ -34,6 +34,11 @@ const sanitizeValue = (value: unknown, depth: number = 0): unknown => {
 };
 
 export const sanitizeMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
+  // Chat content is plain data (including code/Markdown), never rendered HTML here.
+  if (/^\/api\/chats\/[^/]+\/messages\/?$/u.test(req.path)) {
+    next();
+    return;
+  }
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeValue(req.body);
   }

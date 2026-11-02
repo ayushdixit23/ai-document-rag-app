@@ -22,6 +22,7 @@ const getEnvVariable = (key: string, defaultValue: string = ''): string => {
 export const PORT = getEnvVariable('PORT', '5001');
 export const NODE_ENV = getEnvVariable('NODE_ENV', 'development');
 export const DATABASE_URL = getEnvVariable('DATABASE_URL');
+export const DATABASE_URL_DIRECT = getEnvVariable('DATABASE_URL_DIRECT', DATABASE_URL);
 export const DATABASE_POOL_MAX = parseInt(getEnvVariable('DATABASE_POOL_MAX', '10'), 10);
 
 // RAG integrations

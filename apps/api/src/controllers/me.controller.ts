@@ -5,14 +5,7 @@ import { ERROR_CODES } from '../core/errors/errorCodes.js';
 import { SuccessResponse } from '../core/responses/SuccessResponse.js';
 import type { PersonalizationPrefsInput } from '../core/validation/schemas/personalization.schema.js';
 import { getUserPreferences, upsertUserPreferences } from '../services/preferences.service.js';
-
-function requireUserId(req: Request): string {
-  const userId = req.session?.user.id;
-  if (!userId) {
-    throw new AppError('Authentication required', 401, ERROR_CODES.UNAUTHORIZED);
-  }
-  return userId;
-}
+import { requireUserId } from '../utils/request-user.js';
 
 export const getMe = (req: Request, res: Response): Response => {
   const session = req.session;

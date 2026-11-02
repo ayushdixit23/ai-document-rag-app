@@ -10,6 +10,7 @@ export const chat = pgTable('chat', {
     .references(() => user.id, { onDelete: 'cascade' }),
   summary: text('summary'),
   summarizedUntil: timestamp('summarized_until'),
+  summarizedUntilMessageId: text('summarized_until_message_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

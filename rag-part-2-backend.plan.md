@@ -1,25 +1,25 @@
 ---
 name: RAG Part 2 — Backend Features
 overview: 'All backend features on top of Part 1: documents upload API + ingest worker, chats CRUD + thread, and the full query pipeline (SSE send, router, vector search, citations, rolling summary job). No UI changes.'
-status: pending
+status: implemented
 depends_on: rag-part-1-foundation.plan.md
 parent_plan: langchain-first_rag_682de98b.plan.md
 todos:
   - id: documents-api
     content: 'Documents API: presign, complete, status, list, retry, delete + stale-upload cleanup job'
-    status: pending
+    status: completed
   - id: ingest-worker
     content: 'Ingest worker: R2 get, magic-byte check, loader, splitter, embeddings, chunk insert, failure handling'
-    status: pending
+    status: completed
   - id: chats-api
     content: 'Chats API: CRUD, message thread, chat document scope'
-    status: pending
+    status: completed
   - id: query-pipeline
     content: 'Query pipeline: SSE send endpoint, router, vector search, prompt, streaming answer, citations'
-    status: pending
+    status: completed
   - id: summary
     content: 'Rolling summary: trigger check, summarize-chat job + worker, cursor concurrency guard'
-    status: pending
+    status: completed
 ---
 
 # RAG Part 2: Backend Features
@@ -104,3 +104,9 @@ Logic in `apps/api/src/services/rag/summary/summarize-chat.ts`, worker in `summa
 - Summary job verified: force a long chat (or lower `SUMMARY_TRIGGER_TOKENS` in dev), confirm summary written, cursor advanced, second fold rewrites instead of appending
 - Router verified for all three RAG.md scenarios: no documents, document question, topic switch away and back
 - `pnpm validate` green
+
+## Implementation notes
+
+Backend modules, worker registration, cursor migration and automated tests are implemented. Setup and live smoke instructions are in [apps/api/RAG_BACKEND.md](apps/api/RAG_BACKEND.md). No UI changes. Live Gemini/end-to-end validation remains pending approval; the configured database still needs the new cursor column applied.
+
+Verified: `pnpm validate`, `pnpm test` (19 passing), and `pnpm --filter api build`. Read-only checks confirmed R2 bucket access and the PostgreSQL `vector` extension.

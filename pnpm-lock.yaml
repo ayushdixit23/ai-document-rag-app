@@ -35,6 +35,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1156.0
         version: 3.1156.0
+      '@langchain/classic':
+        specifier: 1.0.55
+        version: 1.0.55(@aws-sdk/credential-provider-node@3.972.88)(@langchain/core@1.3.0(@opentelemetry/api@1.10.0)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(@opentelemetry/api@1.10.0)(@smithy/signature-v4@5.7.4)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(ws@8.21.1)
       '@langchain/community':
         specifier: ^1.1.29
         version: 1.1.29(@aws-sdk/client-s3@3.1156.0)(@aws-sdk/credential-provider-node@3.972.88)(@browserbasehq/sdk@2.22.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.64.1)(deepmerge@4.3.1)(dotenv@17.4.2)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(zod@4.4.3))(@ibm-cloud/watsonx-ai@1.7.16)(@langchain/core@1.3.0(@opentelemetry/api@1.10.0)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))(@opentelemetry/api@1.10.0)(@smithy/signature-v4@5.7.4)(d3-dsv@3.0.1)(html-to-text@9.0.5)(ibm-cloud-sdk-core@5.9.1)(ignore@7.0.5)(jsonwebtoken@9.0.3)(mammoth@1.13.0)(mongodb@7.5.0)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(pdf-parse@2.4.5)(pg@8.23.1)(playwright@1.64.1)(ws@8.21.1)
@@ -50,6 +53,9 @@ importers:
       '@langchain/textsplitters':
         specifier: ^1.0.2
         version: 1.0.2(@langchain/core@1.3.0(@opentelemetry/api@1.10.0)(openai@7.43.0(@aws-sdk/credential-provider-node@3.972.88)(@smithy/signature-v4@5.7.4)(ws@8.21.1)(zod@4.4.3))(ws@8.21.1))
+      '@xmldom/xmldom':
+        specifier: 0.8.15
+        version: 0.8.15
       better-auth:
         specifier: ^1.6.23
         version: 1.6.23(@opentelemetry/api@1.10.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.10.0)(@types/pg@8.20.0)(kysely@0.29.4)(pg@8.23.1)(postgres@3.4.9))(mongodb@7.5.0)(next@16.2.6(@opentelemetry/api@1.10.0)(@playwright/test@1.64.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(pg@8.23.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -80,6 +86,9 @@ importers:
       helmet:
         specifier: ^8.1.0
         version: 8.2.0
+      jszip:
+        specifier: 3.10.2
+        version: 3.10.2
       mammoth:
         specifier: ^1.13.0
         version: 1.13.0

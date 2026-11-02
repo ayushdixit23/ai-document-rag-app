@@ -2,6 +2,8 @@
 
 Production-ready Express.js API with TypeScript, Drizzle/PostgreSQL, and comprehensive security.
 
+Document upload, chat, streaming answers and summary setup: [RAG backend](./RAG_BACKEND.md).
+
 ## Quick Start
 
 ```bash
