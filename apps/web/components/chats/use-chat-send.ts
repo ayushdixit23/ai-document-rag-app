@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { createPendingTurn } from '@/lib/chats/pending-turn';
 import { useChatStore } from '@/lib/chats/store';
-import { errorMessage, titleFromPrompt } from '@/lib/chats/store-helpers';
+import { errorMessage } from '@/lib/chats/store-helpers';
 import type { Message, SendMessageInput } from '@/lib/chats/types';
 
 export function useChatSend(chatId?: string) {
@@ -36,7 +36,7 @@ export function useChatSend(chatId?: string) {
     setCreating(true);
     if (!activeId) setPendingMessages(createPendingTurn('draft', input));
     try {
-      const id = activeId ?? (await createChat(titleFromPrompt(input.content)));
+      const id = activeId ?? (await createChat());
       if (revision.current !== current) return false;
       sendMessage(id, input);
       if (!activeId) {

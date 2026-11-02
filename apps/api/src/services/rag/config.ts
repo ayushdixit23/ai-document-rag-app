@@ -5,5 +5,6 @@ export const CHUNK_SIZE = 512;
 export const CHUNK_OVERLAP = 64;
 export const TOP_K = 8;
 export const HISTORY_TOKENS = 3_000;
+export const PROMPT_HISTORY_TOKENS = 12_000;
 export const SUMMARY_TRIGGER_TOKENS = 4_000;
 export const EMBEDDING_DIMENSIONS = 768;

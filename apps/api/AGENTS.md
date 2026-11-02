@@ -34,7 +34,9 @@ npm run format
 
 - Uses `tsx` for dev (not ts-node): `"tsx watch src/index.ts"`
 - Uses `rimraf` for cross-platform clean
-- Drizzle + `postgres` (postgres.js) — Neon pooler needs `prepare: false`
+- Drizzle + `postgres` (postgres.js) — `DATABASE_PREPARE_STATEMENTS` defaults to false.
+  Enable only after verifying protocol preparation support (current Neon PgBouncer supports it).
+  Drizzle's `unsafe()` calls need the adapter in `src/db/prepared-queries.ts` to opt in.
 - DB scripts: `pnpm db:push` / `pnpm db:generate` / `pnpm db:migrate` / `pnpm db:studio` / `pnpm db:clear`
 
 ## Repository Structure

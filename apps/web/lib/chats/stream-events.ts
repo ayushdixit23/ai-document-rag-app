@@ -13,6 +13,13 @@ const eventSchema = z.discriminatedUnion('event', [
     data: z.object({ userMessageId: z.string(), processingDocumentIds: z.array(z.string()) }),
   }),
   z.object({ event: z.literal('sources'), data: z.array(source) }),
+  z.object({
+    event: z.literal('status'),
+    data: z.object({
+      phase: z.enum(['reading_documents', 'answering']),
+      documentIds: z.array(z.string()),
+    }),
+  }),
   z.object({ event: z.literal('token'), data: z.object({ text: z.string() }) }),
   z.object({
     event: z.literal('done'),
@@ -30,7 +37,7 @@ const eventSchema = z.discriminatedUnion('event', [
 export type StreamEvent = z.infer<typeof eventSchema>;
 
 export function parseStreamEvent(event: string, data: string): StreamEvent | null {
-  if (!['meta', 'sources', 'token', 'done', 'error'].includes(event)) return null;
+  if (!['meta', 'status', 'sources', 'token', 'done', 'error'].includes(event)) return null;
   try {
     return eventSchema.parse({ event, data: JSON.parse(data) as unknown });
   } catch {

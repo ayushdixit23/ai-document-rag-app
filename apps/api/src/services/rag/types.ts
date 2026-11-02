@@ -11,6 +11,7 @@ export type Citation = Omit<Source, 'chunkId'>;
 
 export interface StreamEvents {
   meta: { userMessageId: string; processingDocumentIds: string[] };
+  status: { phase: 'reading_documents' | 'answering'; documentIds: string[] };
   sources: { n: number; documentId: string; title: string; page: number | null }[];
   token: { text: string };
   done: { assistantMessageId: string; citations: Citation[] };

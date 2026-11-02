@@ -1,11 +1,11 @@
 import type { StoredChat, StoredMessage } from '../../chats/chat.repository.js';
-import { estimateTokens } from '../history.js';
+import { estimateTokens, historyText } from '../history.js';
 import { messagesToFold } from './fold.js';
 import type { SummaryWrite } from './summary.repository.js';
 
 export interface SummaryInput {
   previousSummary: string | null;
-  messages: Pick<StoredMessage, 'role' | 'content'>[];
+  messages: Pick<StoredMessage, 'role' | 'content' | 'documentNames'>[];
 }
 export interface SummaryEvent {
   chatId: string;
@@ -36,7 +36,7 @@ export const runSummaryPipeline = async (
   const folded = messagesToFold(messages);
   const cursor = folded.at(-1);
   const unsummarizedTokens = messages.reduce(
-    (sum, item) => sum + estimateTokens(item.content ?? ''),
+    (sum, item) => sum + estimateTokens(historyText(item)),
     0,
   );
   if (!cursor) {
@@ -45,7 +45,7 @@ export const runSummaryPipeline = async (
   }
   const summary = await deps.generate({
     previousSummary: started.summary,
-    messages: folded.map(({ role, content }) => ({ role, content })),
+    messages: folded.map(({ role, content, documentNames }) => ({ role, content, documentNames })),
   });
   if (!summary.trim()) throw new Error('Summary model returned no text.');
   const saved = await deps.save({ started, cursorId: cursor.id, summary });

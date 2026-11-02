@@ -35,6 +35,13 @@ Schema (`apps/api/src/db/schema/message.ts`, `apps/api/src/db/schema/chats.ts`):
 
 A single message may attach more than one document (`message_document`).
 
+If the question needs documents that are still indexing, keep the same turn open
+and show “Reading documents…” until those files are ready. Refresh their state
+before retrieval, then answer the original question with sources. Do not save a
+premature clarification or a “files are processing” answer. Waiting is cancellable;
+indexing failures and timeouts show an actionable error. Unrelated general questions
+can still proceed without waiting for previously attached files.
+
 **Potential problems**
 
 - Retrieval of irrelevant chunks.

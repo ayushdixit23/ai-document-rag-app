@@ -8,6 +8,7 @@ import {
   GEMINI_FAST_MODEL,
 } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from './config.js';
+import { lowLatencyThinking } from './model-options.js';
 
 const MAX_RETRIES = 3;
 
@@ -21,6 +22,16 @@ export const fastModel = new ChatGoogle({
   model: GEMINI_FAST_MODEL,
   apiKey: GEMINI_API_KEY,
   maxRetries: MAX_RETRIES,
+  ...lowLatencyThinking(GEMINI_FAST_MODEL),
+});
+
+// Routing and naming must never inherit lengthy provider retry/backoff cycles.
+export const routingModel = new ChatGoogle({
+  model: GEMINI_FAST_MODEL,
+  apiKey: GEMINI_API_KEY,
+  maxRetries: 0,
+  maxOutputTokens: 512,
+  ...lowLatencyThinking(GEMINI_FAST_MODEL),
 });
 
 export const embeddings = new GoogleGenerativeAIEmbeddings({

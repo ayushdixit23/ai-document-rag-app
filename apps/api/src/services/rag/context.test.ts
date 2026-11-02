@@ -69,6 +69,7 @@ void test('cursor SQL uses the exact stored timestamp and ID, with parameterized
     id: 'chat',
     userId: 'user',
     title: 'title',
+    titlePending: false,
     summary: 'summary',
     summarizedUntil: new Date(0),
     summarizedUntilMessageId: 'cursor',
@@ -84,6 +85,7 @@ void test('cursor SQL uses the exact stored timestamp and ID, with parameterized
 void test('history stays bounded and source markup cannot break out of its data container', async () => {
   const history = await recentHistory(
     Array.from({ length: 30 }, (_, index) => row(String(index), 'x'.repeat(900))),
+    3_000,
   );
   assert.ok(history.reduce((sum, item) => sum + estimateTokens(item.text), 0) <= 3_000);
   const prompt = await buildAnswerPrompt({

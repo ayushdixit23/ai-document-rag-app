@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, exists } from 'drizzle-orm';
 
 import { AppError } from '../../core/errors/AppError.js';
 import { ERROR_CODES } from '../../core/errors/errorCodes.js';
@@ -8,7 +8,10 @@ import { document, message, messageDocument } from '../../db/schema/message.js';
 import { publicDocument } from '../documents/document.repository.js';
 
 export type StoredChat = typeof chat.$inferSelect;
-export type StoredMessage = typeof message.$inferSelect;
+export type StoredMessage = typeof message.$inferSelect & {
+  documentNames?: string[];
+  hasCitations?: boolean;
+};
 
 export const ownedChatFilter = (userId: string, id: string) =>
   and(eq(chat.userId, userId), eq(chat.id, id));
@@ -21,22 +24,23 @@ export const getOwnedChat = async (userId: string, id: string): Promise<StoredCh
 
 export const loadChatDocuments = async (userId: string, chatId: string) => {
   const rows = await db
-    .selectDistinct({ document })
-    .from(document)
-    .innerJoin(messageDocument, eq(messageDocument.documentId, document.id))
-    .innerJoin(message, eq(message.id, messageDocument.messageId))
-    .innerJoin(chat, eq(chat.id, message.chatId))
-    .where(and(ownedChatFilter(userId, chatId), eq(document.userId, userId)))
-    .orderBy(desc(document.createdAt), desc(document.id));
-  return rows.map((row) => publicDocument(row.document));
-};
-
-export const loadRecentMessages = async (chatId: string): Promise<StoredMessage[]> => {
-  const rows = await db
     .select()
-    .from(message)
-    .where(eq(message.chatId, chatId))
-    .orderBy(desc(message.createdAt), desc(message.id))
-    .limit(1_000);
-  return rows.reverse();
+    .from(document)
+    .where(
+      and(
+        eq(document.userId, userId),
+        exists(
+          db
+            .select({ id: messageDocument.messageId })
+            .from(messageDocument)
+            .innerJoin(message, eq(message.id, messageDocument.messageId))
+            .innerJoin(chat, eq(chat.id, message.chatId))
+            .where(
+              and(ownedChatFilter(userId, chatId), eq(messageDocument.documentId, document.id)),
+            ),
+        ),
+      ),
+    )
+    .orderBy(desc(document.createdAt), desc(document.id));
+  return rows.map(publicDocument);
 };

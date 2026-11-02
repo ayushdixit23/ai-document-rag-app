@@ -2,11 +2,15 @@ import type { BaseMessage } from '@langchain/core/messages';
 
 import type { saveAssistantMessage } from '../chats/message.repository.js';
 import { parseCitations, publicCitations } from './citations.js';
+import { SUMMARY_TRIGGER_TOKENS } from './config.js';
+import { estimateTokens, historyText } from './history.js';
 import type { PreparedTurn } from './prepare-turn.js';
 import { buildAnswerPrompt } from './prompt.js';
 import type { retrieveSources } from './retrieval.js';
 import type { routeQuestion } from './router.js';
-import type { Source, TurnStream } from './types.js';
+import { findSources } from './source-selection.js';
+import type { TurnStream } from './types.js';
+import type { DocumentWaitDependencies } from './wait-for-documents.js';
 
 export interface QueryDependencies {
   routeQuestion: typeof routeQuestion;
@@ -17,33 +21,9 @@ export interface QueryDependencies {
     signal: AbortSignal,
   ) => Promise<AsyncIterable<{ text: string }>>;
   scheduleSummary: (chatId: string) => void;
+  reportRetrievalError?: (error: unknown, chatId: string) => void;
+  documents: DocumentWaitDependencies;
 }
-
-const findSources = async (
-  turn: PreparedTurn,
-  stream: TurnStream,
-  dependencies: QueryDependencies,
-) => {
-  const ready = turn.documents.filter((row) => row.status === 'ready');
-  if (!ready.length) return { sources: [], documentRoute: false };
-  const decision = await dependencies.routeQuestion({
-    content: turn.input.content || 'Describe the attached documents.',
-    summary: turn.chat.summary,
-    history: turn.history,
-    documentNames: ready.map((row) => row.name),
-    hasNewAttachments: turn.input.documentIds.length > 0,
-    signal: stream.signal,
-  });
-  const documentRoute = decision.route === 'documents';
-  const sources: Source[] = documentRoute
-    ? await dependencies.retrieveSources(
-        turn.userId,
-        ready.map((row) => row.id),
-        decision.standaloneQuery,
-      )
-    : [];
-  return { sources, documentRoute };
-};
 
 const streamAnswer = async (input: {
   prompt: BaseMessage[];
@@ -65,16 +45,22 @@ const streamAnswer = async (input: {
 };
 
 export const runQueryPipeline = async (
-  turn: PreparedTurn,
+  initial: PreparedTurn,
   stream: TurnStream,
   dependencies: QueryDependencies,
 ): Promise<void> => {
-  const processing = turn.documents.filter((row) => ['pending', 'processing'].includes(row.status));
+  const processing = initial.documents.filter((row) =>
+    ['pending', 'processing'].includes(row.status),
+  );
   await stream.send('meta', {
-    userMessageId: turn.userMessageId,
+    userMessageId: initial.userMessageId,
     processingDocumentIds: processing.map((row) => row.id),
   });
-  const { sources, documentRoute } = await findSources(turn, stream, dependencies);
+  const { turn, sources, documentRoute, retrievalFailed, routingFallback } = await findSources(
+    initial,
+    stream,
+    dependencies,
+  );
   await stream.send(
     'sources',
     sources.map(({ n, documentId, title, page }) => ({ n, documentId, title, page })),
@@ -85,7 +71,11 @@ export const runQueryPipeline = async (
     history: turn.history,
     sources,
     documentRoute,
-    processingNames: processing.map((row) => row.name),
+    retrievalFailed,
+    routingFallback,
+    processingNames: turn.documents
+      .filter((row) => ['pending', 'processing'].includes(row.status))
+      .map((row) => row.name),
     failedNames: turn.documents.filter((row) => row.status === 'failed').map((row) => row.name),
   });
   const content = await streamAnswer({ prompt, stream, dependencies });
@@ -96,5 +86,9 @@ export const runQueryPipeline = async (
     citations,
   );
   await stream.send('done', { assistantMessageId, citations: publicCitations(citations) });
-  dependencies.scheduleSummary(turn.chat.id);
+  const tokens =
+    turn.history.reduce((sum, item) => sum + estimateTokens(historyText(item)), 0) +
+    estimateTokens(turn.input.content) +
+    estimateTokens(content);
+  if (tokens > SUMMARY_TRIGGER_TOKENS) dependencies.scheduleSummary(turn.chat.id);
 };

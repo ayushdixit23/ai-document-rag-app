@@ -36,7 +36,7 @@ export const MessageItem = memo(function MessageItem({ message }: { message: Mes
       </div>
       <div className="text-foreground text-base leading-relaxed">
         {streaming && !message.content ? (
-          <TypingIndicator />
+          <TypingIndicator readingDocuments={message.phase === 'reading_documents'} />
         ) : (
           <MessageContent
             content={message.content ?? ''}

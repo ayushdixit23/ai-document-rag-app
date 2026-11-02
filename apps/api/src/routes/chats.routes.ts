@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { generateTitle } from '../controllers/chat-title.controller.js';
 import * as controller from '../controllers/chats.controller.js';
 import { sendMessage } from '../controllers/messages.controller.js';
 import {
@@ -23,6 +24,7 @@ router.patch(
   asyncHandler(controller.renameChat),
 );
 router.delete('/:id', asyncHandler(controller.deleteChat));
+router.post('/:id/title', asyncHandler(generateTitle));
 router.get('/:id/documents', asyncHandler(controller.getDocuments));
 router.get('/:id/messages', asyncHandler(controller.getMessages));
 router.post(

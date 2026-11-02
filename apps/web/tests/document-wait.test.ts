@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict';
+import { afterEach, mock, test } from 'node:test';
+import { setImmediate } from 'node:timers/promises';
+
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import { TypingIndicator } from '@/components/chats/typing-indicator';
+import { createChatStore } from '@/lib/chats/store';
+
+import { chat, document, mockFetch, sseFrame, waitForIdle } from './fixtures';
+
+afterEach(() => {
+  mock.restoreAll();
+});
+
+void test('document reading stays visible and the original turn resumes when indexing finishes', async () => {
+  const store = createChatStore();
+  store.setState({
+    chats: [chat],
+    documentsById: { [document.id]: { ...document, status: 'processing' } },
+  });
+  let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
+  const encode = (event: string, data: unknown) => new TextEncoder().encode(sseFrame(event, data));
+  mockFetch(
+    () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(value) {
+            controller = value;
+          },
+        }),
+        { headers: { 'Content-Type': 'text/event-stream' } },
+      ),
+  );
+  store
+    .getState()
+    .sendMessage(chat.id, { content: 'Explain these files', documentIds: [document.id] });
+  assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.phase, 'reading_documents');
+  assert.ok(controller);
+  controller.enqueue(
+    encode('meta', { userMessageId: 'user', processingDocumentIds: [document.id] }),
+  );
+  controller.enqueue(encode('status', { phase: 'reading_documents', documentIds: [document.id] }));
+  await setImmediate();
+  assert.equal(store.getState().generatingChatId, chat.id);
+  assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.content, '');
+  controller.enqueue(encode('status', { phase: 'answering', documentIds: [document.id] }));
+  controller.enqueue(encode('sources', []));
+  controller.enqueue(encode('token', { text: 'The indexed document says…' }));
+  controller.enqueue(encode('done', { assistantMessageId: 'answer', citations: [] }));
+  await waitForIdle(store);
+  assert.equal(store.getState().documentsById[document.id]?.status, 'ready');
+  assert.equal(store.getState().messagesByChatId[chat.id]?.length, 2);
+  assert.equal(
+    store.getState().messagesByChatId[chat.id]?.at(-1)?.content,
+    'The indexed document says…',
+  );
+  assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.phase, undefined);
+  store.getState().reset();
+});
+
+void test('stopping document reading cancels the stream and clears the loading phase', async () => {
+  const store = createChatStore();
+  store.setState({ documentsById: { [document.id]: { ...document, status: 'processing' } } });
+  mockFetch(
+    () => new Response(new ReadableStream(), { headers: { 'Content-Type': 'text/event-stream' } }),
+  );
+  store.getState().sendMessage(chat.id, { content: 'Explain', documentIds: [document.id] });
+  await setImmediate();
+  store.getState().stopGenerating(chat.id);
+  await waitForIdle(store);
+  assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.status, 'stopped');
+  assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.phase, undefined);
+  store.getState().reset();
+});
+
+void test('the reading indicator exposes its visible label through a status region', () => {
+  const html = renderToStaticMarkup(createElement(TypingIndicator, { readingDocuments: true }));
+  assert.match(html, /Reading documents…/u);
+  assert.match(html, /role="status"/u);
+});

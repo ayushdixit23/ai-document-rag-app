@@ -1,9 +1,10 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, sql } from 'drizzle-orm';
 
 import type { db } from '../../../db/index.js';
 import { chat } from '../../../db/schema/chats.js';
 import { message } from '../../../db/schema/message.js';
 import type { StoredChat } from '../../chats/chat.repository.js';
+import { documentNamesSql } from '../../chats/document-context.js';
 import { afterSummaryCursor } from '../history.js';
 
 type SummaryDatabase = Pick<typeof db, 'select' | 'update'>;
@@ -20,7 +21,7 @@ export const loadSummaryChat = async (database: SummaryDatabase, chatId: string)
 
 export const loadUnsummarizedMessages = (database: SummaryDatabase, started: StoredChat) =>
   database
-    .select()
+    .select({ ...getTableColumns(message), documentNames: documentNamesSql })
     .from(message)
     .where(and(eq(message.chatId, started.id), afterSummaryCursor(started)))
     .orderBy(asc(message.createdAt), asc(message.id));

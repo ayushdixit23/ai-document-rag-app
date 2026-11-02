@@ -1,3 +1,4 @@
+import { requestChatTitle } from '@/lib/chats/chat-title';
 import { applyMessageEvent } from '@/lib/chats/message-events';
 import { createPendingTurn } from '@/lib/chats/pending-turn';
 import { errorMessage, patchMessage, upsertChat } from '@/lib/chats/store-helpers';
@@ -9,6 +10,11 @@ import type { SendMessageInput } from '@/lib/chats/types';
 function beginTurn(store: StoreAccess, id: string, input: SendMessageInput) {
   const [user, assistant] = createPendingTurn(id, input);
   const state = store.getState();
+  assistant.phase = input.documentIds.some((documentId) =>
+    ['pending', 'processing'].includes(state.documentsById[documentId]?.status ?? ''),
+  )
+    ? 'reading_documents'
+    : 'answering';
   store.setState({
     generatingChatId: id,
     threads: { ...state.threads, [id]: { status: 'ready' } },
@@ -42,6 +48,7 @@ async function runTurn(
       input,
       (event) => {
         if (signal.aborted) return;
+        if (event.event === 'meta') requestChatTitle(store, runtime, id);
         if (event.event === 'token') tokens.append(event.data.text);
         else {
           tokens.flush();
@@ -65,6 +72,7 @@ async function runTurn(
         ...state.messagesByChatId,
         [id]: patchMessage(state.messagesByChatId[id] ?? [], ids.assistant, {
           status: signal.aborted ? 'stopped' : 'error',
+          phase: undefined,
           error: signal.aborted ? 'Response stopped.' : errorMessage(error),
         }),
       },

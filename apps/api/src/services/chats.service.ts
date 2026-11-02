@@ -2,33 +2,53 @@ import { randomUUID } from 'node:crypto';
 
 import { asc, desc, eq } from 'drizzle-orm';
 
+import { AppError } from '../core/errors/AppError.js';
+import { ERROR_CODES } from '../core/errors/errorCodes.js';
 import { db } from '../db/index.js';
 import { chat } from '../db/schema/chats.js';
 import { document, message, messageDocument } from '../db/schema/message.js';
 import { messageCitation } from '../db/schema/message-citation.js';
 import { getOwnedChat, loadChatDocuments, ownedChatFilter } from './chats/chat.repository.js';
 
-export const createChat = async (userId: string, title = 'New chat') => {
-  const [row] = await db.insert(chat).values({ id: randomUUID(), userId, title }).returning();
+export const createChat = async (userId: string, title?: string) => {
+  const [row] = await db
+    .insert(chat)
+    .values({
+      id: randomUUID(),
+      userId,
+      title: title ?? 'New chat',
+      titlePending: title === undefined,
+    })
+    .returning();
   return row;
 };
 
 export const listChats = (userId: string) =>
   db
-    .select()
+    .select({
+      id: chat.id,
+      title: chat.title,
+      titlePending: chat.titlePending,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+    })
     .from(chat)
     .where(eq(chat.userId, userId))
     .orderBy(desc(chat.updatedAt), desc(chat.id));
 
 export const renameChat = async (userId: string, id: string, title: string) => {
-  await getOwnedChat(userId, id);
-  const [row] = await db.update(chat).set({ title }).where(ownedChatFilter(userId, id)).returning();
+  const [row] = await db
+    .update(chat)
+    .set({ title, titlePending: false })
+    .where(ownedChatFilter(userId, id))
+    .returning();
+  if (!row) throw new AppError('Chat not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND);
   return row;
 };
 
 export const deleteChat = async (userId: string, id: string): Promise<void> => {
-  await getOwnedChat(userId, id);
-  await db.delete(chat).where(ownedChatFilter(userId, id));
+  const rows = await db.delete(chat).where(ownedChatFilter(userId, id)).returning({ id: chat.id });
+  if (!rows.length) throw new AppError('Chat not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND);
 };
 
 const loadThreadLinks = async (chatId: string) => {

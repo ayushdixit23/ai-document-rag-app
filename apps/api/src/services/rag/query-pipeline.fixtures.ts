@@ -18,6 +18,7 @@ export const makeTurn = (): PreparedTurn => ({
     id: 'chat',
     userId: 'owner',
     title: 'Chat',
+    titlePending: false,
     summary: null,
     summarizedUntil: null,
     summarizedUntilMessageId: null,
@@ -49,6 +50,10 @@ export const makeHarness = (route: 'documents' | 'general' = 'documents') => {
     },
   };
   const dependencies: QueryDependencies = {
+    documents: {
+      load: (_userId, ids) => Promise.resolve(ids.map((id) => ({ ...makeDocument('ready'), id }))),
+      pause: () => Promise.resolve(),
+    },
     routeQuestion: () => {
       calls.routed += 1;
       return Promise.resolve({ route, standaloneQuery: 'standalone question' });
@@ -82,16 +87,20 @@ export const addDocument = (
   turn: PreparedTurn,
   status: PreparedTurn['documents'][number]['status'],
 ) => {
-  turn.documents.push({
-    id: 'doc',
-    name: 'Report',
-    mimeType: 'text/plain',
-    size: 100,
-    status,
-    errorMessage: null,
-    pageCount: null,
-    chunkCount: 1,
-    createdAt: new Date(0),
-    updatedAt: new Date(0),
-  });
+  turn.documents.push(makeDocument(status));
 };
+
+export const makeDocument = (
+  status: PreparedTurn['documents'][number]['status'],
+): PreparedTurn['documents'][number] => ({
+  id: 'doc',
+  name: 'Report',
+  mimeType: 'text/plain',
+  size: 100,
+  status,
+  errorMessage: null,
+  pageCount: null,
+  chunkCount: 1,
+  createdAt: new Date(0),
+  updatedAt: new Date(0),
+});

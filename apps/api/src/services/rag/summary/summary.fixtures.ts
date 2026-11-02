@@ -5,6 +5,7 @@ const initialChat = (): StoredChat => ({
   id: 'chat',
   userId: 'user',
   title: 'title',
+  titlePending: false,
   summary: null,
   summarizedUntil: null,
   summarizedUntilMessageId: null,
@@ -23,7 +24,7 @@ export const makeSummaryHarness = () => {
       messages.push({
         id,
         chatId: 'chat',
-        role: 'user',
+        role: messages.length % 2 === 0 ? 'user' : 'assistant',
         content: 'x'.repeat(1800),
         createdAt: new Date(messages.length),
         updatedAt: new Date(messages.length),
@@ -59,6 +60,7 @@ export const makeSummaryHarness = () => {
   };
   return {
     append,
+    messages,
     inputs,
     events,
     dependencies,

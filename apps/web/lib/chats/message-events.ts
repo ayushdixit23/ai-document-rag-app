@@ -1,3 +1,4 @@
+import { setDocumentStatus } from '@/lib/chats/document-events';
 import { patchMessage } from '@/lib/chats/store-helpers';
 import type { StoreAccess } from '@/lib/chats/store-types';
 import type { StreamEvent } from '@/lib/chats/stream-events';
@@ -17,19 +18,19 @@ export function applyMessageEvent(
   switch (event.event) {
     case 'meta':
       messages = patchMessage(messages, ids.user, { id: event.data.userMessageId });
-      for (const id of event.data.processingDocumentIds) {
-        const doc = state.documentsById[id];
-        if (doc && doc.status !== 'ready' && doc.status !== 'failed') {
-          state.setDocument({ ...doc, status: 'processing' });
-        }
-      }
+      setDocumentStatus(store, event.data.processingDocumentIds, 'processing');
       break;
     case 'sources':
-      patch({ citations: event.data });
+      patch({ citations: event.data, phase: 'answering' });
+      break;
+    case 'status':
+      patch({ phase: event.data.phase });
+      if (event.data.phase === 'answering')
+        setDocumentStatus(store, event.data.documentIds, 'ready');
       break;
     case 'token': {
       const current = messages.find((message) => message.id === ids.assistant);
-      patch({ content: (current?.content ?? '') + event.data.text });
+      patch({ content: (current?.content ?? '') + event.data.text, phase: 'answering' });
       break;
     }
     case 'done':
@@ -37,6 +38,7 @@ export function applyMessageEvent(
         id: event.data.assistantMessageId,
         citations: event.data.citations,
         status: undefined,
+        phase: undefined,
         retryInput: undefined,
       });
       break;

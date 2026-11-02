@@ -23,6 +23,3 @@ export const withoutKey = <T>(record: Record<string, T>, id: string): Record<str
 
 export const patchMessage = (messages: Message[], id: string, patch: Partial<Message>): Message[] =>
   messages.map((message) => (message.id === id ? { ...message, ...patch } : message));
-
-export const titleFromPrompt = (prompt: string): string =>
-  prompt.trim().replace(/\s+/g, ' ').slice(0, 80) || 'New chat';

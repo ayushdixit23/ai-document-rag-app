@@ -19,7 +19,7 @@ export function chatActions(
       runtime.loads.set('chats', request);
       return request;
     },
-    createChat: async (title = 'New chat') => {
+    createChat: async (title) => {
       const signal = runtime.controller.signal;
       const { chat } = await api.createChat(title, signal);
       signal.throwIfAborted();

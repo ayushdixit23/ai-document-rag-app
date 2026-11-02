@@ -36,6 +36,13 @@
       "when": 1793543622125,
       "tag": "0004_minor_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793654547022,
+      "tag": "0005_chat_latency_indexes",
+      "breakpoints": true
     }
   ]
 }

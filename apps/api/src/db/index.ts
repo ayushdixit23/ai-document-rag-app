@@ -1,15 +1,17 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
-import { DATABASE_POOL_MAX, DATABASE_URL } from '../config/env.js';
+import { DATABASE_POOL_MAX, DATABASE_PREPARE_STATEMENTS, DATABASE_URL } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { enablePreparedQueries } from './prepared-queries.js';
 import * as schema from './schema/index.js';
 
-/** Neon pooler (PgBouncer) does not support prepared statements. */
+/** Enable only for a direct connection or a pooler with protocol preparation support. */
 const client = postgres(DATABASE_URL, {
   max: DATABASE_POOL_MAX,
-  prepare: false,
+  prepare: DATABASE_PREPARE_STATEMENTS,
 });
+if (DATABASE_PREPARE_STATEMENTS) enablePreparedQueries(client);
 
 export const db = drizzle(client, { schema });
 
