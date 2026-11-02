@@ -32,7 +32,8 @@ export function ComposerShell({
     <div
       className={cn(
         'bg-card relative w-full rounded-[20px] border p-4 transition-[border-color,box-shadow] shadow-soft',
-        focused || isDragging ? 'border-foreground/20' : 'border-border/80',
+        'focus-within:border-primary/60 focus-within:ring-primary/15 focus-within:ring-2',
+        focused || isDragging ? 'border-primary/60' : 'border-border/80',
         isDragging && 'ring-foreground/10 ring-2',
       )}
       onDragEnter={onDragEnter}
@@ -47,6 +48,7 @@ export function ComposerShell({
         accept={COMPOSER_ACCEPT}
         className="sr-only"
         tabIndex={-1}
+        aria-label="Attach documents"
         onChange={onInputChange}
       />
       {children}

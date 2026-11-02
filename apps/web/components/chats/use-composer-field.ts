@@ -4,43 +4,59 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 const MIN_HEIGHT_PX = 88;
 const MAX_HEIGHT_PX = 280;
-export const COMPOSER_MAX_CHARS = 1000;
+export const COMPOSER_MAX_CHARS = 32_000;
+export type ComposerSuggestion = { text: string; version: number };
 
-export function useComposerField(
-  onSend: (content: string) => void,
-  disabled: boolean,
-  onSubmitted?: () => void,
-) {
+type FieldOptions = {
+  onSend: (content: string) => Promise<boolean>;
+  disabled: boolean;
+  hasFiles: boolean;
+  attachmentsReady: boolean;
+  suggestion?: ComposerSuggestion;
+};
+
+export function useComposerField(options: FieldOptions) {
   const [value, setValue] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const sending = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSend = value.trim().length > 0 && !disabled && value.length <= COMPOSER_MAX_CHARS;
+  const canSend =
+    !options.disabled &&
+    !submitting &&
+    options.attachmentsReady &&
+    (value.trim().length > 0 || options.hasFiles) &&
+    value.length <= COMPOSER_MAX_CHARS;
 
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) {
-      return;
+    if (options.suggestion) {
+      setValue(options.suggestion.text);
+      textareaRef.current?.focus();
     }
+  }, [options.suggestion]);
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
     el.style.height = 'auto';
-    const next = Math.min(Math.max(el.scrollHeight, MIN_HEIGHT_PX), MAX_HEIGHT_PX);
-    el.style.height = `${String(next)}px`;
+    el.style.height = `${String(Math.min(Math.max(el.scrollHeight, MIN_HEIGHT_PX), MAX_HEIGHT_PX))}px`;
   }, [value]);
 
-  const submit = () => {
-    if (!canSend) {
-      return;
-    }
-    const next = value.trim();
+  const submit = async () => {
+    if (!canSend || sending.current) return;
+    sending.current = true;
+    setSubmitting(true);
     setValue('');
-    onSend(next);
-    onSubmitted?.();
-  };
-
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      submit();
+    try {
+      if (!(await options.onSend(value.trim()))) setValue(value);
+    } finally {
+      sending.current = false;
+      setSubmitting(false);
     }
   };
-
-  return { value, setValue, textareaRef, canSend, submit, onKeyDown };
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      void submit();
+    }
+  };
+  return { value, setValue, textareaRef, canSend, submit, submitting, onKeyDown };
 }

@@ -1,32 +1,61 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Button } from '@repo/ui/components/button';
+import { ArrowDown } from 'lucide-react';
 
-import { MessageItem, TypingIndicator } from '@/components/chats/message-item';
+import { MessageItem } from '@/components/chats/message-item';
+import { useChatScroll } from '@/components/chats/use-chat-scroll';
 import { CHAT_COLUMN } from '@/lib/chats/layout';
+import { useChatStore } from '@/lib/chats/store';
 import type { Message } from '@/lib/chats/types';
 
-type MessageListProps = {
-  messages: Message[];
-  isGenerating: boolean;
-};
+const EMPTY_MESSAGES: Message[] = [];
 
-export function MessageList({ messages, isGenerating }: MessageListProps) {
-  const endRef = useRef<HTMLDivElement>(null);
+type MessageListProps = { chatId?: string; pendingMessages: Message[] };
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, isGenerating]);
+function latestUserId(messages: Message[]): string | undefined {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role === 'user') return message.clientId ?? message.id;
+  }
+}
 
+export function MessageList({ chatId, pendingMessages }: MessageListProps) {
+  const savedMessages = useChatStore((state) =>
+    chatId ? (state.messagesByChatId[chatId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
+  );
+  const messages = chatId ? savedMessages : pendingMessages;
+  const scroll = useChatScroll(latestUserId(messages));
   return (
-    <div className="w-full">
-      <div className={`${CHAT_COLUMN} flex flex-col gap-7 py-6 md:gap-8 md:py-8`}>
-        {messages.map((message) => (
-          <MessageItem key={message.id} message={message} />
-        ))}
-        {isGenerating ? <TypingIndicator /> : null}
-        <div ref={endRef} className="h-2" />
+    <div className="relative flex min-h-0 w-full flex-1 flex-col">
+      <div
+        ref={scroll.scroller}
+        tabIndex={0}
+        role="region"
+        aria-label="Conversation"
+        className="focus-visible:ring-ring min-h-0 w-full flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <div
+          ref={scroll.content}
+          className={`${CHAT_COLUMN} flex flex-col gap-7 pt-6 pb-12 md:gap-8 md:pt-8`}
+        >
+          {messages.map((message) => (
+            <MessageItem key={message.clientId ?? message.id} message={message} />
+          ))}
+        </div>
       </div>
+      {!scroll.following ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="bg-card absolute bottom-3 left-1/2 -translate-x-1/2 gap-2 rounded-lg shadow-soft"
+          onClick={scroll.jumpToLatest}
+        >
+          <ArrowDown className="size-3.5" aria-hidden />
+          Jump to latest
+        </Button>
+      ) : null}
     </div>
   );
 }

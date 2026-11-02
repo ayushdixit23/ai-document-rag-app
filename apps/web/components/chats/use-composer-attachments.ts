@@ -1,122 +1,23 @@
 'use client';
 
-import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { type ChangeEvent, useRef } from 'react';
 
-import {
-  type ComposerFile,
-  formatAttachFeedback,
-  mergeComposerFiles,
-  toComposerFiles,
-} from '@/components/chats/composer-attachments';
-
-function notifyAttachResult(
-  added: number,
-  skippedOversize: number,
-  skippedLimit: number,
-  names: string[],
-) {
-  if (added > 0) {
-    toast.success(formatAttachFeedback(added, names));
-  }
-  if (skippedOversize > 0) {
-    toast.error('Some files are larger than 10 MB and were skipped.');
-  }
-  if (skippedLimit > 0) {
-    toast.error('You can attach up to 10 documents.');
-  }
-  if (added === 0 && skippedOversize === 0 && skippedLimit === 0) {
-    toast.error('No documents were attached.');
-  }
-}
-
-function useFileDrag(disabled: boolean, onDropFiles: (files: FileList) => void) {
-  const [isDragging, setIsDragging] = useState(false);
-  const dragDepth = useRef(0);
-
-  const onDragEnter = (event: DragEvent) => {
-    event.preventDefault();
-    if (disabled || !event.dataTransfer.types.includes('Files')) {
-      return;
-    }
-    dragDepth.current += 1;
-    setIsDragging(true);
-  };
-
-  const onDragLeave = (event: DragEvent) => {
-    event.preventDefault();
-    dragDepth.current = Math.max(0, dragDepth.current - 1);
-    if (dragDepth.current === 0) {
-      setIsDragging(false);
-    }
-  };
-
-  const onDragOver = (event: DragEvent) => {
-    event.preventDefault();
-  };
-
-  const onDrop = (event: DragEvent) => {
-    event.preventDefault();
-    dragDepth.current = 0;
-    setIsDragging(false);
-    if (!disabled && event.dataTransfer.files.length > 0) {
-      onDropFiles(event.dataTransfer.files);
-    }
-  };
-
-  return { isDragging, onDragEnter, onDragLeave, onDragOver, onDrop };
-}
+import { useAttachmentUploads } from '@/components/chats/use-attachment-uploads';
+import { useFileDrag } from '@/components/chats/use-file-drag';
 
 export function useComposerAttachments(disabled: boolean) {
-  const [files, setFiles] = useState<ComposerFile[]>([]);
-  const filesRef = useRef(files);
+  const uploads = useAttachmentUploads();
   const inputRef = useRef<HTMLInputElement>(null);
-  filesRef.current = files;
-
-  const addFiles = (list: FileList | File[]) => {
-    if (disabled) {
-      return;
-    }
-    const incoming = toComposerFiles(list);
-    if (incoming.length === 0) {
-      toast.error('No documents were attached.');
-      return;
-    }
-    const result = mergeComposerFiles(filesRef.current, incoming);
-    const names = result.files.slice(filesRef.current.length).map((item) => item.file.name);
-    filesRef.current = result.files;
-    setFiles(result.files);
-    notifyAttachResult(result.added, result.skippedOversize, result.skippedLimit, names);
+  const addFiles = (files: FileList) => {
+    if (!disabled) uploads.addFiles(files);
   };
-
-  const removeFile = (id: string) => {
-    const next = filesRef.current.filter((item) => item.id !== id);
-    filesRef.current = next;
-    setFiles(next);
-  };
-
-  const clearFiles = () => {
-    filesRef.current = [];
-    setFiles([]);
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  };
-
-  const openPicker = () => {
-    if (!disabled) {
-      inputRef.current?.click();
-    }
-  };
-
+  const drag = useFileDrag(disabled, addFiles);
   const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      addFiles(event.target.files);
-    }
+    if (event.target.files) addFiles(event.target.files);
     event.target.value = '';
   };
-
-  const drag = useFileDrag(disabled, addFiles);
-
-  return { files, inputRef, clearFiles, openPicker, removeFile, onInputChange, ...drag };
+  const openPicker = () => {
+    if (!disabled) inputRef.current?.click();
+  };
+  return { ...uploads, inputRef, onInputChange, openPicker, ...drag };
 }

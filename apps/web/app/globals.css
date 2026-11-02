@@ -2,6 +2,7 @@
 @import '@repo/ui/globals.css';
 
 @source '../**/*.{ts,tsx}';
+@source '../node_modules/streamdown/dist/*.js';
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

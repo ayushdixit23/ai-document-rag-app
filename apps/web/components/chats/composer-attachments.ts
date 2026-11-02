@@ -1,54 +1,39 @@
-export const COMPOSER_ACCEPT =
-  '.pdf,.doc,.docx,.txt,.md,.csv,.rtf,.pptx,.xlsx,application/pdf,text/plain,text/markdown,text/csv';
+import { DOCUMENT_ACCEPT, MAX_FILE_BYTES } from '@/lib/documents/file-types';
+import { validateFile } from '@/lib/documents/file-types';
+import type { ChatDocument, DocumentStatus, UploadReservation } from '@/lib/documents/types';
 
-export const COMPOSER_MAX_FILES = 10;
-export const COMPOSER_MAX_FILE_BYTES = 10 * 1024 * 1024;
+export const COMPOSER_ACCEPT = DOCUMENT_ACCEPT;
+export const COMPOSER_MAX_FILES = 5;
+export const COMPOSER_MAX_FILE_BYTES = MAX_FILE_BYTES;
 
 export type ComposerFile = {
   id: string;
   file: File;
+  status: DocumentStatus;
+  reservation?: UploadReservation;
+  document?: ChatDocument;
+  error?: string;
 };
 
-export type MergeComposerFilesResult = {
-  files: ComposerFile[];
-  added: number;
-  skippedOversize: number;
-  skippedLimit: number;
-};
+export const canAttachFiles = (files: ComposerFile[]): boolean =>
+  files.every(
+    (file) => Boolean(file.document) && file.status !== 'uploading' && file.status !== 'failed',
+  );
 
-export function toComposerFiles(list: FileList | File[]): ComposerFile[] {
-  return Array.from(list).map((file) => ({
-    id: crypto.randomUUID(),
-    file,
-  }));
-}
-
-export function mergeComposerFiles(
-  current: ComposerFile[],
-  incoming: ComposerFile[],
-): MergeComposerFilesResult {
-  const room = COMPOSER_MAX_FILES - current.length;
-  if (room <= 0) {
-    return { files: current, added: 0, skippedOversize: 0, skippedLimit: incoming.length };
+export function selectComposerFiles(currentCount: number, incoming: FileList | File[]) {
+  const files: ComposerFile[] = [];
+  const errors: string[] = [];
+  for (const file of Array.from(incoming)) {
+    const error = validateFile(file);
+    if (error) {
+      errors.push(error);
+      continue;
+    }
+    if (currentCount + files.length >= COMPOSER_MAX_FILES) {
+      errors.push('You can attach up to 5 documents per message.');
+      break;
+    }
+    files.push({ id: crypto.randomUUID(), file, status: 'uploading' });
   }
-
-  const withinSize = incoming.filter((item) => item.file.size <= COMPOSER_MAX_FILE_BYTES);
-  const accepted = withinSize.slice(0, room);
-
-  return {
-    files: [...current, ...accepted],
-    added: accepted.length,
-    skippedOversize: incoming.length - withinSize.length,
-    skippedLimit: Math.max(0, withinSize.length - accepted.length),
-  };
-}
-
-export function formatAttachFeedback(added: number, names: string[]): string {
-  if (added === 1 && names[0]) {
-    return `Attached ${names[0]}`;
-  }
-  if (added > 1) {
-    return `Attached ${String(added)} documents`;
-  }
-  return 'Documents attached';
+  return { files, errors };
 }

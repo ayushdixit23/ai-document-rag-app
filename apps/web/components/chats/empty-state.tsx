@@ -28,7 +28,7 @@ export function EmptyState({ onSuggest }: EmptyStateProps) {
         </span>
       </h1>
       <p className="text-muted-foreground mt-3 max-w-md text-[14px] leading-relaxed">
-        Use one of the common prompts below or write your own to begin.
+        Ask a question, or attach documents for answers with sources.
       </p>
 
       {onSuggest ? (

@@ -1,25 +1,25 @@
 ---
 name: RAG Part 3 — Web Frontend
 overview: 'Wire the Next.js app to the Part 2 backend: replace the mock chat store, presigned upload flow with per-file status chips, SSE message streaming, and citation chips. Visual work follows apps/web/DESIGN.md.'
-status: pending
+status: implemented
 depends_on: rag-part-2-backend.plan.md
 parent_plan: langchain-first_rag_682de98b.plan.md
 todos:
   - id: store
     content: 'Replace mock store (apps/web/lib/chats/store.ts) with API-backed store'
-    status: pending
+    status: completed
   - id: upload
     content: 'Upload flow: presign reserve, direct PUT to R2, complete, per-file status on composer chips (limit 5)'
-    status: pending
+    status: completed
   - id: sse
     content: 'SSE client for POST /api/chats/:id/messages streaming'
-    status: pending
+    status: completed
   - id: citations
     content: 'Citation chips on assistant messages'
-    status: pending
+    status: completed
   - id: polish
     content: 'Processing/failed document states, retry affordances, DESIGN.md + validate gate'
-    status: pending
+    status: completed
 ---
 
 # RAG Part 3: Web Frontend
@@ -76,3 +76,11 @@ Assistant messages render `[n]` markers as chips: `{ n, documentId, title, page 
 - End-to-end in the browser: new chat → upload 2 files → watch chips go ready → ask a document question → streamed answer with citation chips → ask a general question (no retrieval) → ask a follow-up ("why did it grow?") that resolves via summary/history
 - Long-conversation sanity: summary path doesn't break the UI (thread fetch always shows full history — the summary is server-side only)
 - `pnpm validate` green; visual check against DESIGN.md in light and dark mode
+
+## Implementation notes
+
+The API-backed store, direct uploads, document lifecycle controls, POST SSE client and inline citation previews are implemented with separate transport, state, lifecycle and rendering responsibilities. Setup, recovery semantics and the live smoke checklist are in [apps/web/RAG_FRONTEND.md](apps/web/RAG_FRONTEND.md).
+
+Automated tests use mocked HTTP responses and synthetic files. Live R2/Gemini and long-conversation summary verification remain environment-dependent; no database migration, bucket configuration or model call is performed by the frontend implementation.
+
+Verified: `pnpm validate`, `pnpm test` (28 web + 19 API tests), and `pnpm --filter web build`. Synthetic browser QA covered citation previews, literal unmatched markers, document/error states, light/dark themes, and a 390 px mobile viewport without horizontal overflow. The temporary preview route was removed before the production build.

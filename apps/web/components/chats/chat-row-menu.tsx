@@ -14,6 +14,7 @@ import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 type ChatRowMenuProps = {
   title: string;
   visible: boolean;
+  disabled?: boolean;
   onRename: () => void;
   onDelete: () => void;
 };
@@ -21,7 +22,7 @@ type ChatRowMenuProps = {
 const itemClass =
   'gap-1.5 rounded-md px-2 py-1.5 text-[12px] leading-none font-medium [&_svg]:size-3';
 
-export function ChatRowMenu({ title, visible, onRename, onDelete }: ChatRowMenuProps) {
+export function ChatRowMenu({ title, visible, disabled, onRename, onDelete }: ChatRowMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,13 +31,14 @@ export function ChatRowMenu({ title, visible, onRename, onDelete }: ChatRowMenuP
           variant="ghost"
           size="icon-xs"
           aria-label={`Actions for ${title}`}
+          disabled={disabled}
           className={cn(
             'text-muted-foreground mr-1.5 shrink-0 opacity-0 transition-opacity',
             'hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100',
             visible && 'opacity-100',
           )}
         >
-          <MoreHorizontal className="size-3.5" />
+          <MoreHorizontal className="size-3.5" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

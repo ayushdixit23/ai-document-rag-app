@@ -1,56 +1,54 @@
 'use client';
 
+import { memo } from 'react';
+
 import { CitationChips } from '@/components/chats/citation-chips';
+import { MessageContent } from '@/components/chats/message-content';
+import { MessageDocuments } from '@/components/chats/message-documents';
+import { MessageRetry } from '@/components/chats/message-retry';
+import { TypingIndicator } from '@/components/chats/typing-indicator';
 import type { Message } from '@/lib/chats/types';
 
-type MessageItemProps = {
-  message: Message;
-};
-
-export function MessageItem({ message }: MessageItemProps) {
-  const isUser = message.role === 'user';
-
-  if (isUser) {
+export const MessageItem = memo(function MessageItem({ message }: { message: Message }) {
+  if (message.role === 'user') {
     return (
-      <article className="chat-fade-in flex w-full justify-end">
-        <div className="bg-secondary/80 text-foreground max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed">
-          <p className="whitespace-pre-wrap">{message.content}</p>
+      <article className="chat-fade-in flex w-full justify-end" aria-label="Your message">
+        <div className="bg-secondary/80 text-foreground min-w-0 max-w-[90%] rounded-xl px-4 py-3 text-[15px] leading-relaxed sm:max-w-[85%]">
+          {message.content ? (
+            <p className="whitespace-pre-wrap wrap-anywhere">{message.content}</p>
+          ) : null}
+          <MessageDocuments documentIds={message.documentIds} />
         </div>
       </article>
     );
   }
-
+  const streaming = message.status === 'streaming';
   return (
-    <article className="chat-fade-in w-full">
+    <article className="chat-fade-in w-full" aria-label="AskDocs answer" aria-busy={streaming}>
       <div className="mb-2 flex items-center gap-2">
-        <span className="bg-foreground text-background flex size-5 items-center justify-center rounded-[5px] text-[10px] font-bold">
+        <span
+          aria-hidden
+          className="bg-foreground text-background flex size-5 items-center justify-center rounded-sm text-[10px] font-bold"
+        >
           A
         </span>
         <span className="text-muted-foreground text-xs font-medium tracking-wide">AskDocs</span>
       </div>
-      <div className="text-foreground max-w-none text-[16px] leading-[1.65]">
-        <p className="whitespace-pre-wrap text-[#31302e] dark:text-[#ebeae8]">{message.content}</p>
-        {message.citations ? <CitationChips citations={message.citations} /> : null}
+      <div className="text-foreground text-base leading-relaxed">
+        {streaming && !message.content ? (
+          <TypingIndicator />
+        ) : (
+          <MessageContent
+            content={message.content ?? ''}
+            citations={message.citations}
+            pending={streaming}
+          />
+        )}
+        <CitationChips citations={message.citations} pending={streaming} />
+        {message.status === 'error' || message.status === 'stopped' ? (
+          <MessageRetry message={message} />
+        ) : null}
       </div>
     </article>
   );
-}
-
-export function TypingIndicator() {
-  return (
-    <div className="chat-fade-in flex items-start gap-2.5" aria-live="polite">
-      <span className="bg-foreground text-background mt-0.5 flex size-5 items-center justify-center rounded-[5px] text-[10px] font-bold">
-        A
-      </span>
-      <div>
-        <p className="text-muted-foreground text-xs font-medium tracking-wide">AskDocs</p>
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className="sr-only">Writing an answer</span>
-          <span className="bg-muted-foreground/40 size-1.5 animate-pulse rounded-full [animation-delay:0ms]" />
-          <span className="bg-muted-foreground/40 size-1.5 animate-pulse rounded-full [animation-delay:160ms]" />
-          <span className="bg-muted-foreground/40 size-1.5 animate-pulse rounded-full [animation-delay:320ms]" />
-        </div>
-      </div>
-    </div>
-  );
-}
+});

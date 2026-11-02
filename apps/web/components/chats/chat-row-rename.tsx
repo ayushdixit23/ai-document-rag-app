@@ -5,14 +5,15 @@ import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 
 
 type ChatRowRenameProps = {
   title: string;
-  onSave: (title: string) => void;
+  onSave: (title: string) => Promise<void>;
   onCancel: () => void;
 };
 
-export function ChatRowRename({ title, onSave, onCancel }: ChatRowRenameProps) {
+function useRenameForm({ title, onSave, onCancel }: ChatRowRenameProps) {
   const [value, setValue] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
   const closedRef = useRef(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -27,20 +28,28 @@ export function ChatRowRename({ title, onSave, onCancel }: ChatRowRenameProps) {
     action();
   };
 
-  const commit = () => {
+  const commit = async () => {
+    if (closedRef.current) return;
     const next = value.trim();
     if (!next || next === title) {
       finish(onCancel);
       return;
     }
-    finish(() => {
-      onSave(next);
-    });
+    closedRef.current = true;
+    setPending(true);
+    try {
+      await onSave(next);
+    } catch {
+      closedRef.current = false;
+      inputRef.current?.focus();
+    } finally {
+      setPending(false);
+    }
   };
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    commit();
+    void commit();
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -50,17 +59,26 @@ export function ChatRowRename({ title, onSave, onCancel }: ChatRowRenameProps) {
     }
   };
 
+  return { value, setValue, inputRef, pending, commit, onSubmit, onKeyDown };
+}
+
+export function ChatRowRename(props: ChatRowRenameProps) {
+  const { value, setValue, inputRef, pending, commit, onSubmit, onKeyDown } = useRenameForm(props);
   return (
     <form className="flex min-w-0 flex-1 items-center px-2 py-1" onSubmit={onSubmit}>
       <Input
         ref={inputRef}
         value={value}
         aria-label="Rename chat"
+        maxLength={200}
+        disabled={pending}
         className="h-8 rounded-md px-2 text-sm"
         onChange={(event) => {
           setValue(event.target.value);
         }}
-        onBlur={commit}
+        onBlur={() => {
+          void commit();
+        }}
         onKeyDown={onKeyDown}
       />
     </form>

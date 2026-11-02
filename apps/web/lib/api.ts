@@ -36,6 +36,10 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     headers: buildHeaders(init),
   });
 
+  return readApiResponse<T>(response);
+}
+
+export async function readApiResponse<T>(response: Response): Promise<T> {
   let payload: unknown;
   try {
     payload = await response.json();
@@ -44,7 +48,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   }
 
   if (!response.ok || !isApiSuccess<T>(payload)) {
-    const failure = payload as ApiFailure;
+    const failure = (payload ?? {}) as ApiFailure;
     throw new ApiError(
       failure.error?.message || failure.message || 'Request failed',
       response.status,

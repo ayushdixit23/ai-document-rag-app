@@ -1,70 +1,46 @@
 'use client';
 
-import { useRouter } from 'nextjs-toploader/app';
+import { useEffect } from 'react';
 
-import { ChatEmptyWorkspace, ChatThreadWorkspace } from '@/components/chats/chat-workspace';
+import { ChatLoadState } from '@/components/chats/chat-load-state';
+import { ChatWorkspace } from '@/components/chats/chat-workspace';
+import { useChatSend } from '@/components/chats/use-chat-send';
 import { useChatStore } from '@/lib/chats/store';
-import type { Message } from '@/lib/chats/types';
 
-/** Stable empty snapshot — inline `[]` breaks useSyncExternalStore equality. */
-const EMPTY_MESSAGES: Message[] = [];
+export function ChatPanel({ chatId }: { chatId?: string }) {
+  return <ChatPanelContent key={chatId ?? 'new'} chatId={chatId} />;
+}
 
-type ChatPanelProps = {
-  chatId?: string;
-};
-
-export function ChatPanel({ chatId }: ChatPanelProps) {
-  const router = useRouter();
-  const createChat = useChatStore((state) => state.createChat);
-  const sendMessage = useChatStore((state) => state.sendMessage);
-  const generatingChatId = useChatStore((state) => state.generatingChatId);
-  const chatTitle = useChatStore((state) =>
-    chatId ? (state.chats.find((chat) => chat.id === chatId)?.title ?? 'Chat') : 'Chat',
+function ChatPanelContent({ chatId }: { chatId?: string }) {
+  const { activeId, pendingMessages, disabled, onSend, onStop } = useChatSend(chatId);
+  const loadThread = useChatStore((state) => state.loadThread);
+  const thread = useChatStore((state) => (activeId ? state.threads[activeId] : undefined));
+  const title = useChatStore(
+    (state) => state.chats.find((chat) => chat.id === activeId)?.title ?? 'New chat',
   );
-  const messages = useChatStore((state) => {
-    if (!chatId) {
-      return EMPTY_MESSAGES;
-    }
-    return state.messagesByChatId[chatId] ?? EMPTY_MESSAGES;
-  });
-  const chatExists = useChatStore((state) =>
-    chatId ? state.chats.some((chat) => chat.id === chatId) : true,
+  const hasMessages = useChatStore((state) =>
+    Boolean(activeId && state.messagesByChatId[activeId]?.length),
   );
-
-  const isGenerating = Boolean(chatId && generatingChatId === chatId);
-  const showEmpty = !chatId || messages.length === 0;
-
-  const handleSend = (content: string) => {
-    if (chatId) {
-      void sendMessage(chatId, content);
-      return;
-    }
-    const id = createChat();
-    router.push(`/chats/${id}`);
-    void sendMessage(id, content);
+  useEffect(() => {
+    if (activeId) void loadThread(activeId);
+  }, [activeId, loadThread]);
+  const reload = () => {
+    if (activeId) void loadThread(activeId);
   };
-
-  if (chatId && !chatExists) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <p className="text-foreground text-xl font-semibold tracking-tight">Chat not found</p>
-        <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
-          This conversation was deleted or never existed.
-        </p>
-      </div>
-    );
+  if (activeId && (!thread || thread.notFound || (!hasMessages && thread.status !== 'ready'))) {
+    return <ChatLoadState state={thread} onRetry={reload} />;
   }
-
-  if (showEmpty) {
-    return <ChatEmptyWorkspace isGenerating={isGenerating} onSend={handleSend} />;
-  }
-
   return (
-    <ChatThreadWorkspace
-      title={chatTitle}
-      messages={messages}
-      isGenerating={isGenerating}
-      onSend={handleSend}
+    <ChatWorkspace
+      title={title}
+      chatId={activeId}
+      hasMessages={hasMessages}
+      pendingMessages={pendingMessages}
+      disabled={disabled}
+      onSend={onSend}
+      onStop={onStop}
+      onReload={reload}
+      loadError={thread?.status === 'error' ? thread.error : undefined}
     />
   );
 }

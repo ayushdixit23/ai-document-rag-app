@@ -4,27 +4,31 @@ import { useState } from 'react';
 
 import { ComposerFileList } from '@/components/chats/composer-file-list';
 import { ComposerFooter } from '@/components/chats/composer-footer';
+import { ComposerInput } from '@/components/chats/composer-input';
 import { ComposerShell } from '@/components/chats/composer-shell';
-import { useComposerAttachments } from '@/components/chats/use-composer-attachments';
-import { COMPOSER_MAX_CHARS, useComposerField } from '@/components/chats/use-composer-field';
+import { useComposerDraft } from '@/components/chats/use-composer-draft';
+import type { ComposerSuggestion } from '@/components/chats/use-composer-field';
+import type { SendMessageInput } from '@/lib/chats/types';
 
 type ComposerProps = {
   disabled?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
-  onSend: (content: string) => void;
+  suggestion?: ComposerSuggestion;
+  onSend: (input: SendMessageInput) => Promise<boolean>;
+  onStop?: () => void;
 };
 
 export function Composer({
   disabled = false,
-  placeholder = 'Ask whatever you want…',
+  placeholder = 'Ask anything, or attach documents…',
   autoFocus = false,
+  suggestion,
   onSend,
+  onStop,
 }: ComposerProps) {
   const [focused, setFocused] = useState(false);
-  const attachments = useComposerAttachments(disabled);
-  const field = useComposerField(onSend, disabled, attachments.clearFiles);
-
+  const { field, attachments, submitting } = useComposerDraft({ disabled, suggestion, onSend });
   return (
     <ComposerShell
       focused={focused}
@@ -38,37 +42,32 @@ export function Composer({
     >
       <ComposerFileList
         files={attachments.files}
-        disabled={disabled}
+        disabled={submitting}
         onRemove={attachments.removeFile}
+        onRetry={attachments.retryFile}
       />
-      <textarea
-        ref={field.textareaRef}
-        value={field.value}
-        disabled={disabled}
+      <ComposerInput
+        field={field}
+        submitting={submitting}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        rows={3}
-        maxLength={COMPOSER_MAX_CHARS}
-        aria-label="Message"
-        className="text-foreground placeholder:text-muted-foreground max-h-70 min-h-22 w-full resize-none overflow-y-auto bg-transparent text-[15px] leading-relaxed outline-none disabled:cursor-not-allowed disabled:opacity-60"
-        onFocus={() => {
-          setFocused(true);
-        }}
-        onBlur={() => {
-          setFocused(false);
-        }}
-        onChange={(event) => {
-          field.setValue(event.target.value);
-        }}
-        onKeyDown={field.onKeyDown}
+        onFocusChange={setFocused}
       />
       <ComposerFooter
+        onStop={onStop}
         valueLength={field.value.length}
         canSend={field.canSend}
-        disabled={disabled}
+        disabled={submitting}
         onAttach={attachments.openPicker}
-        onSend={field.submit}
+        onSend={() => {
+          void field.submit();
+        }}
       />
+      {attachments.files.some((item) => item.status === 'uploading') ? (
+        <p role="status" className="text-muted-foreground mt-2 text-xs">
+          Finish uploading before sending. You can keep typing.
+        </p>
+      ) : null}
     </ComposerShell>
   );
 }

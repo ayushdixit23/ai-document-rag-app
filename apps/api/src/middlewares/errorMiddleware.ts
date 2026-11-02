@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
+import { errorDiagnostics } from '../core/errors/errorDiagnostics.js';
 import { normalizeError } from '../core/errors/errorHandler.js';
 import { ErrorPayload } from '../core/responses/ApiResponse.js';
 import { logger } from '../utils/logger.js';
@@ -24,6 +25,7 @@ export const errorMiddleware = (
       message: normalizedError.message,
       details: normalizedError.details,
       stack: normalizedError.stack,
+      causes: errorDiagnostics(err),
     },
     'Request error',
   );

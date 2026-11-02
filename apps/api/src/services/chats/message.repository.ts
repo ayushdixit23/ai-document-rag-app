@@ -1,12 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { eq } from 'drizzle-orm';
-
 import { db } from '../../db/index.js';
-import { chat } from '../../db/schema/chats.js';
-import { message, messageDocument } from '../../db/schema/message.js';
+import { messageDocument } from '../../db/schema/message.js';
 import { messageCitation } from '../../db/schema/message-citation.js';
 import type { Source } from '../rag/types.js';
+import { insertMessageRow } from './message-writes.js';
 
 export const saveUserMessage = async (
   chatId: string,
@@ -15,12 +13,11 @@ export const saveUserMessage = async (
 ): Promise<string> => {
   const id = randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(message).values({ id, chatId, role: 'user', content });
+    await insertMessageRow(tx, { id, chatId, role: 'user', content });
     if (documentIds.length)
       await tx
         .insert(messageDocument)
         .values(documentIds.map((documentId) => ({ messageId: id, documentId })));
-    await tx.update(chat).set({ updatedAt: new Date() }).where(eq(chat.id, chatId));
   });
   return id;
 };
@@ -32,7 +29,7 @@ export const saveAssistantMessage = async (
 ): Promise<string> => {
   const id = randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(message).values({ id, chatId, role: 'assistant', content });
+    await insertMessageRow(tx, { id, chatId, role: 'assistant', content });
     if (citations.length)
       await tx.insert(messageCitation).values(
         citations.map((source) => ({
@@ -44,7 +41,6 @@ export const saveAssistantMessage = async (
           snippet: source.snippet,
         })),
       );
-    await tx.update(chat).set({ updatedAt: new Date() }).where(eq(chat.id, chatId));
   });
   return id;
 };
