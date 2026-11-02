@@ -21,7 +21,7 @@ afterEach(() => {
   mock.restoreAll();
 });
 
-void test('streaming replaces provisional IDs, shows sources before tokens, and finalizes citations', async () => {
+void test('streaming replaces provisional IDs and shows only confirmed citations in the source list', async () => {
   const store = createChatStore();
   store.setState({ chats: [chat] });
   store.getState().setDocument(document);
@@ -51,7 +51,8 @@ void test('streaming replaces provisional IDs, shows sources before tokens, and 
   assert.equal(messages[1].status, undefined);
   assert.equal(messages[0].clientId, optimistic?.[0]?.clientId);
   assert.equal(messages[1].clientId, optimistic?.[1]?.clientId);
-  assert.ok(snapshots.some((snapshot) => snapshot.content === '' && snapshot.citations === 1));
+  assert.ok(snapshots.some((snapshot) => snapshot.content === '' && snapshot.citations === 0));
+  assert.ok(!snapshots.some((snapshot) => snapshot.content === '' && snapshot.citations > 0));
   assert.equal(store.getState().documentsById[document.id]?.status, 'processing');
 });
 

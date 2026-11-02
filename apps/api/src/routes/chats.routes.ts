@@ -9,6 +9,7 @@ import {
   sendMessageSchema,
 } from '../core/validation/schemas/chats.schema.js';
 import { resourceParamsSchema } from '../core/validation/schemas/documents.schema.js';
+import { messagePageSchema } from '../core/validation/schemas/message-page.schema.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import { requireAuth } from '../middlewares/requireAuth.js';
 import { validateRequest } from '../middlewares/validation.js';
@@ -26,7 +27,11 @@ router.patch(
 router.delete('/:id', asyncHandler(controller.deleteChat));
 router.post('/:id/title', asyncHandler(generateTitle));
 router.get('/:id/documents', asyncHandler(controller.getDocuments));
-router.get('/:id/messages', asyncHandler(controller.getMessages));
+router.get(
+  '/:id/messages',
+  validateRequest({ query: messagePageSchema }),
+  asyncHandler(controller.getMessages),
+);
 router.post(
   '/:id/messages',
   validateRequest({ body: sendMessageSchema }),

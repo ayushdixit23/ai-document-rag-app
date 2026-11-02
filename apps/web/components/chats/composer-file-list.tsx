@@ -13,7 +13,7 @@ type ComposerFileListProps = {
 export function ComposerFileList({ files, disabled, onRemove, onRetry }: ComposerFileListProps) {
   if (!files.length) return null;
   return (
-    <ul aria-label="Attached documents" className="mb-3 flex flex-wrap gap-2">
+    <ul aria-label="Attached documents" className="mb-3 flex flex-wrap gap-x-2 gap-y-3 pt-1.5">
       {files.map((item) => (
         <li key={item.id} className="min-w-0 max-w-full">
           <DocumentChip

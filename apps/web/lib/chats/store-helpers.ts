@@ -5,6 +5,7 @@ export const initialChatState = (): ChatState => ({
   chats: [],
   chatList: { status: 'idle' },
   threads: {},
+  paginationByChatId: {},
   messagesByChatId: {},
   documentsById: {},
   generatingChatId: null,

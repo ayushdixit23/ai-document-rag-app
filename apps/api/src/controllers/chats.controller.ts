@@ -3,7 +3,9 @@ import type { Request, Response } from 'express';
 import { SuccessResponse } from '../core/responses/SuccessResponse.js';
 import { createChatSchema, renameChatSchema } from '../core/validation/schemas/chats.schema.js';
 import { resourceParamsSchema } from '../core/validation/schemas/documents.schema.js';
+import { messagePageSchema } from '../core/validation/schemas/message-page.schema.js';
 import * as chats from '../services/chats.service.js';
+import { getChatThread } from '../services/chats/thread.service.js';
 import { requireUserId } from '../utils/request-user.js';
 
 export const createChat = async (req: Request, res: Response) => {
@@ -37,9 +39,10 @@ export const deleteChat = async (req: Request, res: Response) => {
 
 export const getMessages = async (req: Request, res: Response) => {
   const { id } = resourceParamsSchema.parse(req.params);
+  const { before } = messagePageSchema.parse(req.query);
   return new SuccessResponse(
     'Thread loaded',
-    await chats.getChatThread(requireUserId(req), id),
+    await getChatThread(requireUserId(req), id, before),
   ).send(req, res);
 };
 

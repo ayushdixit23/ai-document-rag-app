@@ -12,19 +12,28 @@ import type { Message } from '@/lib/chats/types';
 export const MessageItem = memo(function MessageItem({ message }: { message: Message }) {
   if (message.role === 'user') {
     return (
-      <article className="chat-fade-in flex w-full justify-end" aria-label="Your message">
-        <div className="bg-secondary/80 text-foreground min-w-0 max-w-[90%] rounded-xl px-4 py-3 text-[15px] leading-relaxed sm:max-w-[85%]">
-          {message.content ? (
+      <article
+        className="chat-fade-in flex w-full flex-col items-end gap-2"
+        aria-label="Your message"
+        data-message-id={message.clientId ?? message.id}
+      >
+        <MessageDocuments documentIds={message.documentIds} />
+        {message.content ? (
+          <div className="bg-secondary/80 text-foreground min-w-0 max-w-[90%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed sm:max-w-[85%]">
             <p className="whitespace-pre-wrap wrap-anywhere">{message.content}</p>
-          ) : null}
-          <MessageDocuments documentIds={message.documentIds} />
-        </div>
+          </div>
+        ) : null}
       </article>
     );
   }
   const streaming = message.status === 'streaming';
   return (
-    <article className="chat-fade-in w-full" aria-label="AskDocs answer" aria-busy={streaming}>
+    <article
+      className="chat-fade-in w-full"
+      aria-label="AskDocs answer"
+      aria-busy={streaming}
+      data-message-id={message.clientId ?? message.id}
+    >
       <div className="mb-2 flex items-center gap-2">
         <span
           aria-hidden
@@ -40,11 +49,11 @@ export const MessageItem = memo(function MessageItem({ message }: { message: Mes
         ) : (
           <MessageContent
             content={message.content ?? ''}
-            citations={message.citations}
+            citations={message.sourceCandidates ?? message.citations}
             pending={streaming}
           />
         )}
-        <CitationChips citations={message.citations} pending={streaming} />
+        <CitationChips citations={message.citations} />
         {message.status === 'error' || message.status === 'stopped' ? (
           <MessageRetry message={message} />
         ) : null}

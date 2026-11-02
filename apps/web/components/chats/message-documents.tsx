@@ -19,6 +19,7 @@ function StoredDocumentChip({ document }: { document: ChatDocument }) {
         status={document.status}
         error={controls.error ?? document.errorMessage ?? undefined}
         disabled={controls.pending}
+        revealRemoveOnHover
         onRetry={() => {
           void controls.retry();
         }}
@@ -41,7 +42,10 @@ export function MessageDocuments({ documentIds }: { documentIds: string[] }) {
   const documents = useChatStore((state) => state.documentsById);
   if (!documentIds.length) return null;
   return (
-    <ul aria-label="Message documents" className="mt-2 flex flex-wrap gap-2">
+    <ul
+      aria-label="Message documents"
+      className="flex max-w-[90%] flex-wrap justify-end gap-x-2 gap-y-3 pt-1.5 sm:max-w-[85%]"
+    >
       {documentIds.map((id) => {
         const document = documents[id];
         return document ? (

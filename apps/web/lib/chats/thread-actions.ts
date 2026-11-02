@@ -1,13 +1,15 @@
 import { ApiError } from '@/lib/api';
 import { fetchThread } from '@/lib/chats/api';
+import { loadOlderMessages } from '@/lib/chats/older-message-actions';
 import { errorMessage, upsertChat } from '@/lib/chats/store-helpers';
 import type { ChatActions, StoreAccess, StoreRuntime } from '@/lib/chats/store-types';
 
 export function threadActions(
   store: StoreAccess,
   runtime: StoreRuntime,
-): Pick<ChatActions, 'loadThread'> {
+): Pick<ChatActions, 'loadThread' | 'loadOlderMessages'> {
   return {
+    loadOlderMessages: (id) => loadOlderMessages(store, runtime, id),
     loadThread: (id) => {
       if (store.getState().generatingChatId === id) return Promise.resolve();
       const key = `thread:${id}`;
@@ -38,6 +40,10 @@ async function loadThread(store: StoreAccess, runtime: StoreRuntime, id: string)
         ...Object.fromEntries(thread.documents.map((doc) => [doc.id, doc])),
       },
       threads: { ...get().threads, [id]: { status: 'ready' } },
+      paginationByChatId: {
+        ...get().paginationByChatId,
+        [id]: { ...thread.pageInfo, loading: false },
+      },
     });
   } catch (error) {
     if (signal.aborted || version !== (runtime.threadVersions.get(id) ?? 0)) return;

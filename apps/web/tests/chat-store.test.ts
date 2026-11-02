@@ -60,12 +60,20 @@ void test('concurrent sidebar loads deduplicate; a stale list cannot undo a newl
   );
 });
 
-void test('thread fetch retains full history, attachments and document statuses', async () => {
+void test('thread fetch retains its 15-message page, attachments and document statuses', async () => {
   const store = createChatStore();
-  const messages = Array.from({ length: 240 }, (_, index) => ({ ...savedUser, id: String(index) }));
-  mockFetch(() => jsonResponse({ chat, messages, documents: [document] }));
+  const messages = Array.from({ length: 15 }, (_, index) => ({ ...savedUser, id: String(index) }));
+  mockFetch(() =>
+    jsonResponse({
+      chat,
+      messages,
+      documents: [document],
+      pageInfo: { hasMore: true, nextCursor: '0' },
+    }),
+  );
   await store.getState().loadThread(chat.id);
-  assert.equal(store.getState().messagesByChatId[chat.id]?.length, 240);
+  assert.equal(store.getState().messagesByChatId[chat.id]?.length, 15);
+  assert.equal(store.getState().paginationByChatId[chat.id]?.nextCursor, '0');
   assert.deepEqual(store.getState().messagesByChatId[chat.id]?.[0]?.documentIds, [document.id]);
   assert.equal(store.getState().documentsById[document.id]?.status, 'pending');
 });

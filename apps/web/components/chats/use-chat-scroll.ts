@@ -1,51 +1,38 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
-import { ScrollFollower } from '@/lib/chats/scroll-follower';
+import { captureScrollAnchor } from '@/lib/chats/scroll-anchor';
+import type { ScrollFollower } from '@/lib/chats/scroll-follower';
+import { observeChatScroll } from '@/lib/chats/scroll-observer';
 
-export function useChatScroll(turnId?: string) {
+export function useChatScroll(turnId?: string, loadingOlder = false) {
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const follower = useRef<ScrollFollower | null>(null);
   const [following, setFollowing] = useState(true);
+  const restoreAnchor = useRef<(() => void) | null>(null);
+  const prepareForPrepend = useCallback(() => {
+    follower.current?.pause();
+    const element = scroller.current;
+    const anchor = content.current?.querySelector<HTMLElement>('[data-message-id]');
+    if (element && anchor) restoreAnchor.current = captureScrollAnchor(element, anchor);
+  }, []);
+  useLayoutEffect(() => {
+    if (loadingOlder || !restoreAnchor.current) return;
+    restoreAnchor.current();
+    restoreAnchor.current = null;
+  });
   useLayoutEffect(() => {
     const element = scroller.current;
     const body = content.current;
     if (!element || !body) return;
-    const controller = new ScrollFollower(element, setFollowing);
-    follower.current = controller;
-    controller.jump();
-    const observer = new ResizeObserver(() => {
-      controller.update();
-    });
-    observer.observe(body);
-    observer.observe(element);
-    const onScroll = () => {
-      controller.onScroll();
-    };
-    const onWheel = (event: WheelEvent) => {
-      if (event.deltaY < 0) controller.pause();
-    };
-    const onTouch = () => {
-      controller.pause();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) controller.pause();
-      if (event.key === 'End') controller.jump();
-    };
-    element.addEventListener('scroll', onScroll, { passive: true });
-    element.addEventListener('wheel', onWheel, { passive: true });
-    element.addEventListener('touchmove', onTouch, { passive: true });
-    element.addEventListener('keydown', onKey);
+    const observed = observeChatScroll(element, body, setFollowing);
+    follower.current = observed.controller;
     return () => {
-      observer.disconnect();
-      element.removeEventListener('scroll', onScroll);
-      element.removeEventListener('wheel', onWheel);
-      element.removeEventListener('touchmove', onTouch);
-      element.removeEventListener('keydown', onKey);
-      controller.dispose();
+      observed.dispose();
       follower.current = null;
+      restoreAnchor.current = null;
     };
   }, []);
   useLayoutEffect(() => {
@@ -55,6 +42,7 @@ export function useChatScroll(turnId?: string) {
     scroller,
     content,
     following,
+    prepareForPrepend,
     jumpToLatest: () => {
       follower.current?.jump();
     },

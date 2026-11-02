@@ -46,6 +46,7 @@ export function chatActions(
         chats: get().chats.filter((chat) => chat.id !== id),
         messagesByChatId: withoutKey(get().messagesByChatId, id),
         threads: withoutKey(get().threads, id),
+        paginationByChatId: withoutKey(get().paginationByChatId, id),
       });
     },
   };

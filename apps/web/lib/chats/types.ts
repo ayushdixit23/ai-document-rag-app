@@ -17,6 +17,7 @@ export type Message = {
   createdAt: string;
   documentIds: string[];
   citations: Citation[];
+  sourceCandidates?: Citation[];
   status?: 'streaming' | 'error' | 'stopped';
   phase?: 'reading_documents' | 'answering';
   error?: string;
@@ -32,3 +33,5 @@ export type Chat = {
 };
 
 export type SendMessageInput = { content: string; documentIds: string[] };
+
+export type MessagePageInfo = { hasMore: boolean; nextCursor: string | null };

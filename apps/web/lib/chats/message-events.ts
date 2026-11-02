@@ -21,7 +21,7 @@ export function applyMessageEvent(
       setDocumentStatus(store, event.data.processingDocumentIds, 'processing');
       break;
     case 'sources':
-      patch({ citations: event.data, phase: 'answering' });
+      patch({ sourceCandidates: event.data, phase: 'answering' });
       break;
     case 'status':
       patch({ phase: event.data.phase });
@@ -37,6 +37,7 @@ export function applyMessageEvent(
       patch({
         id: event.data.assistantMessageId,
         citations: event.data.citations,
+        sourceCandidates: undefined,
         status: undefined,
         phase: undefined,
         retryInput: undefined,

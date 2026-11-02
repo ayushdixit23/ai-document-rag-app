@@ -32,6 +32,9 @@ Schema (`apps/api/src/db/schema/message.ts`, `apps/api/src/db/schema/chats.ts`):
 - Relevant chunks are retrieved based on the user's query.
 - Answers are generated using retrieved document content.
 - Responses include citations to the source document.
+- Retrieved sources are evidence candidates. The sources list appears only after
+  the answer's actual citations are validated; unused retrieved chunks are never
+  displayed as citations. Inline citations can appear as the answer references them.
 
 A single message may attach more than one document (`message_document`).
 
@@ -74,6 +77,10 @@ Documents stay available for the chat after the upload turn. Later messages do n
 These apply to every scenario above.
 
 - **Conversation history management.** Handle long conversations and context-window limitations. `chat.summary` is the place for a compacted history when the full transcript no longer fits.
+- **Visible history pagination.** Load the latest 15 messages first and fetch older
+  messages in cursor-based pages of 15. Preserve the reader's scroll position when
+  prepending history. Pagination of the UI does not restrict the server's conversation
+  memory or the documents available to the chat.
 - **Ambiguous reference resolution.** Correctly interpret references such as "it", "that", or "the previous one" — whether they point at an earlier message or at a document.
 - **Topic switching.** Detect when users change topics or return to earlier discussions, including a return from general chat back to a previously uploaded document.
 - **Document access permissions.** A user can only retrieve information from documents they own (`document.userId`). Never retrieve another user's documents.
