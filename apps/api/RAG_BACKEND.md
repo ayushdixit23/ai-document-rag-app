@@ -55,7 +55,7 @@ SSE order: `meta`, `sources`, zero or more `token`, then `done` or `error`. `sou
 
 Ingestion transitions `uploading → pending → processing → ready | failed`; retry uses `failed → pending`. Cleanup removes uploads older than one hour and requeues pending documents to recover a crash between status update and enqueue. Processing abandoned for over one hour is reclaimed; the original attempt cannot overwrite a newer attempt.
 
-Above 4,000 estimated unsummarized tokens, summaries fold the oldest messages while retaining roughly 3,000 recent tokens. A single oversized latest message stays verbatim; prompt history is independently trimmed. Each rewrite replaces the summary, capped at 1,200 output tokens. A cursor compare-and-set discards stale results. SQL ordering uses original `(created_at, id)` values to preserve timestamp precision. Summary updates preserve chat activity timestamps.
+Above 4,000 estimated unsummarized tokens, summaries fold the oldest messages while retaining roughly 3,000 recent tokens. A single oversized latest message stays verbatim; prompt history is independently trimmed. Each rewrite replaces the summary, capped at 1,200 output tokens. A cursor compare-and-set uses the stable message ID and checks the returned row. A lost comparison fails the job so pg-boss retries with fresh state. The cursor timestamp is copied directly from the message in SQL, preserving microseconds without JavaScript Date parameters. Summary updates preserve chat activity timestamps. Jobs log `skipped`, `wrote` or `conflict` with cursor/token counts, without conversation text; enqueue diagnostics distinguish `queued` from `coalesced` (a waiting job already covers that chat).
 
 ## Validation
 
@@ -80,4 +80,4 @@ curl -N -b /tmp/askdocs-cookies.txt "$RAG_API/api/chats/$RAG_CHAT_ID/messages" \
 curl -sS -b /tmp/askdocs-cookies.txt "$RAG_API/api/chats/$RAG_CHAT_ID/messages"
 ```
 
-Poll to `ready` before asking about the report. Also check a general question without attachments, a document follow-up without reattaching, an unrelated topic, and a return to the report. Upload invalid bytes under a PDF name to verify failure and retry/delete. Live summary verification requires enough conversation content to cross the threshold; automated fold tests use smaller trigger/retention arguments.
+Poll to `ready` before asking about the report. Also check a general question without attachments, a document follow-up without reattaching, an unrelated topic, and a return to the report. Upload invalid bytes under a PDF name to verify failure and retry/delete. Live summary verification requires enough conversation content to cross the threshold; automated tests cover three consecutive folds, rejected writes/retries, and the precision-safe SQL update. After restarting the API, a successful answer queues another summary attempt and includes any still-unsummarized messages above the threshold; no manual cursor reset is needed.
