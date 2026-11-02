@@ -86,9 +86,9 @@ export const configureBucketCors = async (): Promise<void> => {
         CORSRules: [
           {
             AllowedOrigins: ALLOWED_ORIGINS,
-            AllowedMethods: ['PUT'],
-            AllowedHeaders: ['Content-Type'],
-            ExposeHeaders: ['ETag'],
+            AllowedMethods: ['PUT', 'GET', 'HEAD'],
+            AllowedHeaders: ['*', 'content-type', 'content-length'],
+            ExposeHeaders: ['ETag', 'Content-Length'],
             MaxAgeSeconds: 3600,
           },
         ],
