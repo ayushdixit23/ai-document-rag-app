@@ -83,6 +83,19 @@ export const RATE_LIMIT_MAX_REQUESTS = parseInt(
   10,
 );
 
+// Authenticated AI turns: shared PostgreSQL admission limits, separate from the IP limiter.
+const aiLimit = (key: string, fallback: number, maximum: number) =>
+  z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(maximum)
+    .parse(getEnvVariable(key, String(fallback)));
+export const AI_CHAT_REQUESTS_PER_MINUTE = aiLimit('AI_CHAT_REQUESTS_PER_MINUTE', 10, 1_000);
+export const AI_CHAT_REQUESTS_PER_DAY = aiLimit('AI_CHAT_REQUESTS_PER_DAY', 200, 100_000);
+export const AI_CHAT_CONCURRENT_REQUESTS = aiLimit('AI_CHAT_CONCURRENT_REQUESTS', 2, 100);
+export const AI_MAX_OUTPUT_TOKENS = aiLimit('AI_MAX_OUTPUT_TOKENS', 3_072, 65_536);
+
 // Request timeout
 export const REQUEST_TIMEOUT_MS = parseInt(getEnvVariable('REQUEST_TIMEOUT_MS', '60000'), 10);
 

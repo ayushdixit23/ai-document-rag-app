@@ -69,6 +69,7 @@ export const runQueryPipeline = async (
     content: turn.input.content || 'Acknowledge the attached documents and their availability.',
     summary: turn.chat.summary,
     history: turn.history,
+    preferences: turn.preferences,
     sources,
     documentRoute,
     retrievalFailed,

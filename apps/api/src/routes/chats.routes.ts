@@ -10,6 +10,7 @@ import {
 } from '../core/validation/schemas/chats.schema.js';
 import { resourceParamsSchema } from '../core/validation/schemas/documents.schema.js';
 import { messagePageSchema } from '../core/validation/schemas/message-page.schema.js';
+import { aiChatLimit } from '../middlewares/ai-chat-limit.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import { requireAuth } from '../middlewares/requireAuth.js';
 import { validateRequest } from '../middlewares/validation.js';
@@ -35,6 +36,7 @@ router.get(
 router.post(
   '/:id/messages',
   validateRequest({ body: sendMessageSchema }),
+  asyncHandler(aiChatLimit),
   asyncHandler(sendMessage),
 );
 

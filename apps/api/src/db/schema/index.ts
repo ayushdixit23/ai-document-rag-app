@@ -1,3 +1,4 @@
+export { aiChatRequest } from './ai-chat-request.js';
 export { account, session, user, verification } from './auth.js';
 export { chat } from './chats.js';
 export { documentChunk } from './document-chunk.js';

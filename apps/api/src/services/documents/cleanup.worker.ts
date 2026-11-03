@@ -5,12 +5,14 @@ import { document } from '../../db/schema/message.js';
 import { boss, JOB_NAMES } from '../../lib/queue/boss.js';
 import { deleteObject } from '../../lib/storage/r2.js';
 import { logger } from '../../utils/logger.js';
+import { pruneChatRequests } from '../ai/chat-admission.js';
 import { enqueueIngest } from '../rag/jobs.js';
 import { objectRef } from './document.repository.js';
 
 const HOUR_MS = 60 * 60 * 1_000;
 
 export const cleanupStaleUploads = async (): Promise<void> => {
+  await pruneChatRequests();
   const stale = await db
     .select()
     .from(document)

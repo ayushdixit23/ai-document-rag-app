@@ -23,11 +23,11 @@ export const prepareTurn = async (userId: string, chatId: string, input: SendMes
   const [loaded, saved] = await Promise.allSettled([context, write]);
   if (loaded.status === 'rejected') throw loaded.reason;
   if (saved.status === 'rejected') throw saved.reason;
-  const [{ chat, history }, scope, attached] = loaded.value;
+  const [{ chat, history, preferences }, scope, attached] = loaded.value;
   const documents = [
     ...new Map([...scope, ...attached.map(publicDocument)].map((row) => [row.id, row])).values(),
   ];
-  return { userId, chat, history, documents, input, userMessageId };
+  return { userId, chat, history, preferences, documents, input, userMessageId };
 };
 
 export type PreparedTurn = Awaited<ReturnType<typeof prepareTurn>>;

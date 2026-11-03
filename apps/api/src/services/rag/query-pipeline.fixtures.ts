@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 
+import { DEFAULT_PERSONALIZATION_PREFS } from '../../core/validation/schemas/personalization.schema.js';
 import type { PreparedTurn } from './prepare-turn.js';
 import type { QueryDependencies } from './query-pipeline.js';
 import type { Source, StreamEvents, TurnStream } from './types.js';
@@ -26,6 +27,7 @@ export const makeTurn = (): PreparedTurn => ({
     updatedAt: new Date(0),
   },
   history: [],
+  preferences: { ...DEFAULT_PERSONALIZATION_PREFS },
   documents: [],
   input: { content: 'why?', documentIds: [] },
   userMessageId: 'user-message',

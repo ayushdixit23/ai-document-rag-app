@@ -2,6 +2,7 @@ import { ChatGoogle } from '@langchain/google';
 import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 
 import {
+  AI_MAX_OUTPUT_TOKENS,
   GEMINI_API_KEY,
   GEMINI_CHAT_MODEL,
   GEMINI_EMBED_INPUTS_PER_MINUTE,
@@ -19,6 +20,7 @@ export const chatModel = new ChatGoogle({
   apiKey: GEMINI_API_KEY,
   // Surface transient answer failures instead of hiding seconds of provider backoff before text.
   maxRetries: 0,
+  maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
   ...lowLatencyThinking(GEMINI_CHAT_MODEL),
 });
 

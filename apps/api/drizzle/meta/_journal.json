@@ -71,6 +71,13 @@
       "when": 1793694043973,
       "tag": "0009_embedding_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793701063383,
+      "tag": "0010_ai_chat_limits",
+      "breakpoints": true
     }
   ]
 }

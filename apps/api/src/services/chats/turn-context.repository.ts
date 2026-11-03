@@ -3,9 +3,15 @@ import { z } from 'zod';
 
 import { AppError } from '../../core/errors/AppError.js';
 import { ERROR_CODES } from '../../core/errors/errorCodes.js';
+import {
+  DEFAULT_PERSONALIZATION_PREFS,
+  type PersonalizationPrefsInput,
+  personalizationPrefsSchema,
+} from '../../core/validation/schemas/personalization.schema.js';
 import { db } from '../../db/index.js';
 import { chat } from '../../db/schema/chats.js';
 import { message } from '../../db/schema/message.js';
+import { userPreferences } from '../../db/schema/user-preferences.js';
 import { ownedChatFilter, type StoredMessage } from './chat.repository.js';
 import { documentNamesSql } from './document-context.js';
 
@@ -54,7 +60,15 @@ export const loadTurnContext = async (
   database: Pick<typeof db, 'select'> = db,
 ) => {
   const [row] = await database
-    .select({ chat, history: history(excludedId) })
+    .select({
+      chat,
+      history: history(excludedId),
+      preferences: sql<PersonalizationPrefsInput>`coalesce((
+        select prefs from ${userPreferences} where user_id = chat.user_id
+      ), ${JSON.stringify(DEFAULT_PERSONALIZATION_PREFS)}::jsonb)`.mapWith((value: unknown) =>
+        personalizationPrefsSchema.parse(value ?? DEFAULT_PERSONALIZATION_PREFS),
+      ),
+    })
     .from(chat)
     .where(ownedChatFilter(userId, chatId));
   if (!row) throw new AppError('Chat not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND);
