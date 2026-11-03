@@ -4,7 +4,7 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 const MIN_HEIGHT_PX = 88;
 const MAX_HEIGHT_PX = 280;
-export const COMPOSER_MAX_CHARS = 32_000;
+export const COMPOSER_MAX_CHARS = 8_000;
 export type ComposerSuggestion = { text: string; version: number };
 
 type FieldOptions = {

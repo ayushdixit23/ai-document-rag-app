@@ -1,10 +1,10 @@
 export const MAX_FILES_PER_MESSAGE = 5;
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const PRESIGN_TTL_SECONDS = 600;
-// Character limits retained by request; split on structure before falling back to words.
-export const CHUNK_SIZE = 512;
-export const CHUNK_OVERLAP = 64;
-export const CHUNK_VERSION = 'recursive-sections-v2';
+// Larger passages reduce embedding inputs while retaining the 12.5% overlap target.
+export const CHUNK_SIZE = 1_024;
+export const CHUNK_OVERLAP = 128;
+export const CHUNK_VERSION = 'recursive-sections-v3';
 export const TOP_K = 8;
 export const CANDIDATES_PER_BRANCH = 20;
 export const RRF_CONSTANT = 60;

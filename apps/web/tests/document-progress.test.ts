@@ -21,7 +21,7 @@ void test('document status distinguishes preparation, actual section progress, p
       }),
     );
   assert.match(render('embedding'), /Preparing 48\/162 sections…/u);
-  assert.match(render('waiting'), /Waiting for document service…/u);
+  assert.match(render('waiting'), /Preparing 48\/162 sections · waiting for next batch…/u);
   assert.match(render('saving'), /Finishing…/u);
   assert.match(render('embedding'), /role="status"/u);
   assert.doesNotMatch(render('embedding', 'ready'), /Preparing 48\/162 sections…/u);

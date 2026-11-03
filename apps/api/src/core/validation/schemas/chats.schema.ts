@@ -7,7 +7,7 @@ export const createChatSchema = z.object({ title: titleSchema.optional() });
 export const renameChatSchema = z.object({ title: titleSchema });
 export const sendMessageSchema = z
   .object({
-    content: z.string().trim().max(32_000).default(''),
+    content: z.string().trim().max(8_000).default(''),
     documentIds: z.array(z.uuid()).max(MAX_FILES_PER_MESSAGE).default([]),
   })
   .refine((input) => input.content.length > 0 || input.documentIds.length > 0, {

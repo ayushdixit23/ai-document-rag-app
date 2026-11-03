@@ -17,6 +17,10 @@ export function useDocumentControls(document: ChatDocument) {
   const [error, setError] = useState<string>();
   const [watchVersion, setWatchVersion] = useState(0);
   const action = useRef<AbortController | null>(null);
+  const snapshot = useRef(document);
+  useEffect(() => {
+    snapshot.current = document;
+  }, [document]);
   useEffect(
     () => () => {
       action.current?.abort();
@@ -27,15 +31,11 @@ export function useDocumentControls(document: ChatDocument) {
   useEffect(() => {
     if (!processing) return;
     const controller = new AbortController();
-    void fetchDocument(document.id, controller.signal)
-      .then(async ({ document: latest }) => {
-        if (controller.signal.aborted) return;
-        setDocument(latest);
-        await pollDocument(latest, setDocument, controller.signal);
-      })
-      .catch((failure: unknown) => {
+    void pollDocument(snapshot.current, setDocument, controller.signal).catch(
+      (failure: unknown) => {
         if (!controller.signal.aborted) setError(errorMessage(failure));
-      });
+      },
+    );
     return () => {
       controller.abort();
     };

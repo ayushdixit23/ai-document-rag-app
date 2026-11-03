@@ -54,28 +54,28 @@ export class DocumentEmbeddings extends GoogleGenerativeAIEmbeddings {
       options.signal,
       options.onRetry,
     );
-    const started = performance.now();
+    // const started = performance.now();
     const response = await this.fetchBatch(documents, options).catch((error: unknown) => {
       logger.warn(
         {
           model: this.model,
           count: documents.length,
-          durationMs: Math.round(performance.now() - started),
+          // durationMs: Math.round(performance.now() - started),
           errorName: error instanceof Error ? error.name : 'Unknown',
         },
         'Document embedding transport failed',
       );
       throw error;
     });
-    logger.debug(
-      {
-        model: this.model,
-        count: documents.length,
-        status: response.status,
-        durationMs: Math.round(performance.now() - started),
-      },
-      'Document embedding batch',
-    );
+    // logger.debug(
+    //   {
+    //     model: this.model,
+    //     count: documents.length,
+    //     status: response.status,
+    //     durationMs: Math.round(performance.now() - started),
+    //   },
+    //   'Document embedding batch',
+    // );
     if (!response.ok) {
       const error = embeddingProviderError(
         response.status,

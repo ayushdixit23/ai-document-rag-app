@@ -20,6 +20,11 @@ void test('clear attachment and file requests need no classification model', () 
     'Summarize this document.',
     'Compare the uploaded files',
     'Explain report.pdf',
+    'explain page 3',
+    'Please summarize pages 3 to 5.',
+    'What is on page #3?',
+    'Show me slide 12',
+    'Page 3',
   ])
     assert.equal(quickRoute(request(content))?.route, 'documents');
 });
@@ -29,6 +34,9 @@ void test('ambiguous follow-ups and topic switches retain model routing', () => 
     'What is quantum computing?',
     'Explain JavaScript',
     'Explain document databases',
+    'Explain page replacement algorithms',
+    'What is a page in virtual memory?',
+    'Explain page 3 of a different book',
     'Why?',
     'What are the risks?',
   ])

@@ -17,6 +17,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@repo/ui": "workspace:*",
+    "@vercel/analytics": "^2.0.1",
     "better-auth": "^1.6.23",
     "lucide-react": "^1.17.0",
     "next": "16.2.0",

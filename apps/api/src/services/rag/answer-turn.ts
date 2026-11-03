@@ -18,7 +18,7 @@ const streamAnswer = async function* (
   signal: AbortSignal,
   chatId: string,
 ) {
-  const started = performance.now();
+  // const started = performance.now();
   logger.debug(
     {
       chatId,
@@ -28,31 +28,28 @@ const streamAnswer = async function* (
     },
     'Answer prompt size',
   );
-  let first = true;
+  // let first = true;
   const chunks = await timeStage('open model stream', { chatId }, () =>
     chatModel.stream(messages, { signal }),
   );
-  try {
-    for await (const chunk of chunks) {
-      if (first && chunk.text) {
-        first = false;
-        logger.debug(
-          {
-            chatId,
-            stage: 'model first token',
-            durationMs: Math.round(performance.now() - started),
-          },
-          'RAG stage',
-        );
-      }
-      yield chunk;
-    }
-  } finally {
-    logger.debug(
-      { chatId, stage: 'model stream', durationMs: Math.round(performance.now() - started) },
-      'RAG stage',
-    );
+  for await (const chunk of chunks) {
+    // if (first && chunk.text) {
+    //   first = false;
+    //   logger.debug(
+    //     {
+    //       chatId,
+    //       stage: 'model first token',
+    //       durationMs: Math.round(performance.now() - started),
+    //     },
+    //     'RAG stage',
+    //   );
+    // }
+    yield chunk;
   }
+  // logger.debug(
+  //   { chatId, stage: 'model stream', durationMs: Math.round(performance.now() - started) },
+  //   'RAG stage',
+  // );
 };
 
 export const answerTurn = (turn: PreparedTurn, stream: TurnStream): Promise<void> =>

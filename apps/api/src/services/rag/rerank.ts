@@ -82,8 +82,8 @@ export const rerankCandidates = async (
             count: candidates.length,
             shortened: result.shortened,
             units: result.units,
-            reserveMs: state.reserveMs,
-            providerMs: state.providerMs,
+            // reserveMs: state.reserveMs,
+            // providerMs: state.providerMs,
           });
           return result.candidates;
         },
@@ -107,8 +107,8 @@ export const rerankCandidates = async (
     provider: 'local_bm25',
     reason,
     count: candidates.length,
-    reserveMs: state.reserveMs,
-    providerMs: state.providerMs,
+    // reserveMs: state.reserveMs,
+    // providerMs: state.providerMs,
     providerStatus: state.providerStatus,
   });
   return localRerank(query, candidates);

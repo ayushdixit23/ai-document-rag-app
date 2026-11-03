@@ -5,6 +5,7 @@ import { Document } from '@langchain/core/documents';
 
 import { CHUNK_SIZE, CHUNK_VERSION, EMBEDDING_DIMENSIONS } from '../config.js';
 import { embedChunks } from './embed-chunks.js';
+import { pageNumber } from './load-document.js';
 import { recursiveSplit } from './recursive-split.js';
 import { textSections } from './sections.js';
 import { splitDocuments } from './split-document.js';
@@ -72,6 +73,20 @@ void test('page/sheet/row boundaries and exact offsets are preserved, including 
     .filter((chunk) => chunk.metadata.row === 1)
     .map((chunk) => Number(chunk.metadata.sourceStart));
   assert.ok(starts.every((start, index) => index === 0 || start > (starts[index - 1] ?? 0)));
+});
+
+void test('a representative 26-page document fits within one background input allowance', () => {
+  const pages = Array.from(
+    { length: 26 },
+    (_, index) =>
+      new Document({
+        pageContent: 'This passage explains document scoring and its inputs. '.repeat(40),
+        metadata: { loc: { pageNumber: index + 1 } },
+      }),
+  );
+  const chunks = splitDocuments(pages, false);
+  assert.ok(chunks.length <= 96, `Expected at most 96 sections, got ${String(chunks.length)}`);
+  assert.equal(new Set(chunks.map((chunk) => pageNumber(chunk.metadata))).size, 26);
 });
 
 void test('oversized unbroken Unicode falls back safely, with no lost non-whitespace content', () => {

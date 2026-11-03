@@ -83,7 +83,10 @@ export function DocumentChip({
           <span
             role="status"
             title={detail}
-            className="text-muted-foreground mt-0.5 block truncate text-xs"
+            className={cn(
+              'text-muted-foreground mt-0.5 block truncate text-xs',
+              (status === 'pending' || status === 'processing') && 'document-shimmer',
+            )}
           >
             {detail}
           </span>

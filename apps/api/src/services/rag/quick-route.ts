@@ -5,6 +5,8 @@ const GENERIC_FILE_REQUEST =
   /^(?:please\s+)?(?:explain(?:\s+all)?(?:\s+what\s+you\s+can)?|summari[sz]e|describe|analy[sz]e|compare)(?:\s+(?:it|this|these|them|both|all|everything))?[.!?]*$/iu;
 const FILE_REFERENCE =
   /\b(?:this|that|these|those|the|my|attached|uploaded)\s+(?:documents?|files?|pdfs?|reports?|papers?|spreadsheets?)\b/iu;
+const PAGE_REQUEST =
+  /^(?:please\s+)?(?:(?:explain|summari[sz]e|describe|analy[sz]e|read|show(?:\s+me)?)\s+(?:the\s+)?|what(?:'s|\s+is)\s+on\s+)?(?:pages?|slides?)\s*(?:#\s*)?\d+(?:\s*(?:[-–]|to|and)\s*\d+)?(?:\s+in\s+detail)?[.!?]*$/iu;
 const FOLLOW_UP =
   /^(?:why|how so|tell me more|go on|continue|(?:please )?(?:explain|elaborate|expand|simplify)(?: (?:it|that|more|further|in detail))?|(?:give|show)(?: me)? (?:an? )?examples?|what (?:are|about) (?:it|that|its .+))[.!?]*$/iu;
 const TOPIC_SWITCH =
@@ -28,6 +30,7 @@ const relatedFollowUp = (input: RouteInput): boolean => {
 
 const explicitFileRequest = (input: RouteInput) =>
   FILE_REFERENCE.test(input.content) ||
+  PAGE_REQUEST.test(input.content.trim()) ||
   input.documentNames.some(
     (name) => name.length > 3 && input.content.toLowerCase().includes(name.toLowerCase()),
   ) ||

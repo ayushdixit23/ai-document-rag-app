@@ -99,4 +99,13 @@ void test('the reading indicator exposes its visible label through a status regi
   const html = renderToStaticMarkup(createElement(TypingIndicator, { readingDocuments: true }));
   assert.match(html, /Preparing documents…/u);
   assert.match(html, /role="status"/u);
+  assert.match(html, /document-shimmer/u);
+  assert.doesNotMatch(html, /animate-pulse/u);
+});
+
+void test('answer loading restores the three dots after document preparation', () => {
+  const html = renderToStaticMarkup(createElement(TypingIndicator, { readingDocuments: false }));
+  assert.match(html, /Thinking of an answer/u);
+  assert.equal(html.match(/animate-pulse/gu)?.length, 3);
+  assert.doesNotMatch(html, /document-shimmer|Preparing documents/u);
 });
