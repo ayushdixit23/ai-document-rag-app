@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { index, integer, jsonb, pgTable, text, unique, vector } from 'drizzle-orm/pg-core';
 
 import { user } from './auth.js';
@@ -24,6 +25,10 @@ export const documentChunk = pgTable(
       table.embedding.op('vector_cosine_ops'),
     ),
     index('document_chunk_user_document_idx').on(table.userId, table.documentId),
+    index('document_chunk_content_fts_idx').using(
+      'gin',
+      sql`to_tsvector('simple', ${table.content})`,
+    ),
     unique('document_chunk_id_document_id_unique').on(table.id, table.documentId),
     unique('document_chunk_document_index_unique').on(table.documentId, table.chunkIndex),
   ],

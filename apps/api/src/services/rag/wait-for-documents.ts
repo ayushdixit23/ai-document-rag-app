@@ -2,6 +2,7 @@ import { setTimeout } from 'node:timers/promises';
 
 import { AppError } from '../../core/errors/AppError.js';
 import { ERROR_CODES } from '../../core/errors/errorCodes.js';
+import { isIndexing, requiredDocuments } from './document-wait-state.js';
 import type { PreparedTurn } from './prepare-turn.js';
 import type { TurnStream } from './types.js';
 
@@ -11,20 +12,36 @@ export interface DocumentWaitDependencies {
   pause?: (signal: AbortSignal) => Promise<void>;
   timeoutMs?: number;
 }
-const processing = (row: TurnDocument) => ['pending', 'processing'].includes(row.status);
 const WAIT_TIMEOUT_MS = 4 * 60 * 1_000;
+
+const reportReady = (stream: TurnStream, documents: TurnDocument[]) =>
+  stream.send('status', {
+    phase: 'answering',
+    documentIds: documents.map((row) => row.id),
+    documentVersions: documents.map(({ id, updatedAt }) => ({
+      id,
+      updatedAt: updatedAt.toISOString(),
+    })),
+  });
 
 export const waitForDocuments = async (
   turn: PreparedTurn,
   stream: TurnStream,
   deps: DocumentWaitDependencies,
+  requiredIds?: string[],
 ): Promise<PreparedTurn> => {
-  const targets = turn.documents.filter(processing).map((row) => row.id);
+  const targets = requiredIds ?? turn.documents.filter(isIndexing).map((row) => row.id);
   if (!targets.length) return turn;
+  let selected = requiredDocuments(turn.documents, targets);
+  if (selected.every((row) => row.status === 'ready')) {
+    await reportReady(stream, selected);
+    return turn;
+  }
   const deadline = Date.now() + (deps.timeoutMs ?? WAIT_TIMEOUT_MS);
   let documents = turn.documents;
+  let polls = 0;
   await stream.send('status', { phase: 'reading_documents', documentIds: targets });
-  while (documents.some((row) => targets.includes(row.id) && processing(row))) {
+  while (selected.some(isIndexing)) {
     stream.signal.throwIfAborted();
     if (Date.now() >= deadline)
       throw new AppError(
@@ -32,32 +49,15 @@ export const waitForDocuments = async (
         408,
         ERROR_CODES.REQUEST_TIMEOUT,
       );
-    await (deps.pause?.(stream.signal) ?? setTimeout(1_000, undefined, { signal: stream.signal }));
+    await (deps.pause?.(stream.signal) ??
+      setTimeout(Math.min(1_000 + polls * 500, 3_000), undefined, { signal: stream.signal }));
+    polls += 1;
     stream.signal.throwIfAborted();
-    const latest = await deps.load(turn.userId, targets);
+    selected = requiredDocuments(await deps.load(turn.userId, targets), targets);
     stream.signal.throwIfAborted();
-    if (latest.some((row) => row.status === 'failed'))
-      throw new AppError(
-        'A document could not be processed. Retry the failed file, then send your question again.',
-        409,
-        ERROR_CODES.FILE_UPLOAD_FAILED,
-      );
-    if (latest.length !== targets.length)
-      throw new AppError(
-        'An attached document is no longer available.',
-        404,
-        ERROR_CODES.RESOURCE_NOT_FOUND,
-      );
-    const refreshed = new Map(latest.map((row) => [row.id, row]));
+    const refreshed = new Map(selected.map((row) => [row.id, row]));
     documents = documents.map((row) => refreshed.get(row.id) ?? row);
   }
-  const failed = documents.filter((row) => targets.includes(row.id) && row.status !== 'ready');
-  if (failed.length)
-    throw new AppError(
-      'A document could not be processed. Retry the failed file, then send your question again.',
-      409,
-      ERROR_CODES.FILE_UPLOAD_FAILED,
-    );
-  await stream.send('status', { phase: 'answering', documentIds: targets });
+  await reportReady(stream, selected);
   return { ...turn, documents };
 };

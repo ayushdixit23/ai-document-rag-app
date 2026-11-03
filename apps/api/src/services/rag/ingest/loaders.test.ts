@@ -39,7 +39,7 @@ void test('PDF loader preserves page metadata and rejects pages without usable t
   const result = await loadAndSplit(bytes, 'pdf');
   assert.equal(result.pageCount, 1);
   assert.match(result.chunks[0]?.pageContent ?? '', /Annual revenue/u);
-  assert.deepEqual(result.chunks[0]?.metadata.loc, { pageNumber: 1, lines: { from: 1, to: 1 } });
+  assert.deepEqual(result.chunks[0]?.metadata.loc, { pageNumber: 1 });
   await assert.rejects(loadAndSplit(pdfBytes(''), 'pdf'), /No usable text/u);
 });
 

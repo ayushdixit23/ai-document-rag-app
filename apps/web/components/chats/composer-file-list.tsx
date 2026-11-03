@@ -20,6 +20,7 @@ export function ComposerFileList({ files, disabled, onRemove, onRetry }: Compose
             name={item.file.name}
             size={item.file.size}
             status={item.status}
+            progress={item.document?.processingProgress}
             error={item.error}
             disabled={disabled}
             onRemove={() => {

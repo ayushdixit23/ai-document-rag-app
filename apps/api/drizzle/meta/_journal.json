@@ -43,6 +43,34 @@
       "when": 1793654547022,
       "tag": "0005_chat_latency_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793686858903,
+      "tag": "0006_hybrid_reranking",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793693316509,
+      "tag": "0007_rerank_budget_reservation",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793693515175,
+      "tag": "0008_document_processing_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793694043973,
+      "tag": "0009_embedding_cache",
+      "breakpoints": true
     }
   ]
 }

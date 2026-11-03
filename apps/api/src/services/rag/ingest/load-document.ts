@@ -3,12 +3,11 @@ import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import type { Document } from '@langchain/core/documents';
-import { MarkdownTextSplitter, RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 import type { FileKind } from '../../documents/file-types.js';
-import { CHUNK_OVERLAP, CHUNK_SIZE } from '../config.js';
 import { loadExcel } from './excel-loader.js';
 import { IngestError } from './ingest-error.js';
+import { splitDocuments } from './split-document.js';
 
 const loaders: Record<FileKind, (blob: Blob) => Promise<Document[]>> = {
   pdf: (blob) => new PDFLoader(blob, { splitPages: true }).load(),
@@ -41,10 +40,7 @@ export const loadAndSplit = async (bytes: Uint8Array, kind: FileKind) => {
       'No usable text found. Scanned PDFs require OCR, which is not supported yet.',
     );
   }
-  const options = { chunkSize: CHUNK_SIZE, chunkOverlap: CHUNK_OVERLAP };
-  const splitter =
-    kind === 'md' ? new MarkdownTextSplitter(options) : new RecursiveCharacterTextSplitter(options);
-  const chunks = (await splitter.splitDocuments(documents)).filter((item) =>
+  const chunks = splitDocuments(documents, kind === 'md' || kind === 'txt').filter((item) =>
     item.pageContent.trim(),
   );
   return { chunks, pageCount };

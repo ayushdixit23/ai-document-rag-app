@@ -101,6 +101,7 @@ export const makeDocument = (
   errorMessage: null,
   pageCount: null,
   chunkCount: 1,
+  processingProgress: null,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 });

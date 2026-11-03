@@ -19,7 +19,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:clear": "tsx src/scripts/clear.ts"
+    "db:clear": "tsx src/scripts/clear.ts",
+    "db:clear:chats": "tsx src/scripts/clear-chats.ts"
   },
   "prettier": "@repo/prettier-config",
   "keywords": [],

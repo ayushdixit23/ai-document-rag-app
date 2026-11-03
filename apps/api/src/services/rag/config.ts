@@ -1,10 +1,19 @@
 export const MAX_FILES_PER_MESSAGE = 5;
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const PRESIGN_TTL_SECONDS = 600;
+// Character limits retained by request; split on structure before falling back to words.
 export const CHUNK_SIZE = 512;
 export const CHUNK_OVERLAP = 64;
+export const CHUNK_VERSION = 'recursive-sections-v2';
 export const TOP_K = 8;
+export const CANDIDATES_PER_BRANCH = 20;
+export const RRF_CONSTANT = 60;
+export const EVIDENCE_TOKENS = 4_000;
+export const RERANK_TIMEOUT_MS = 2_000;
+export const RERANK_MODEL = 'bge-reranker-v2-m3';
 export const HISTORY_TOKENS = 3_000;
 export const PROMPT_HISTORY_TOKENS = 12_000;
 export const SUMMARY_TRIGGER_TOKENS = 4_000;
 export const EMBEDDING_DIMENSIONS = 768;
+export const INGEST_EMBED_TIMEOUT_MS = 120_000;
+export const EMBEDDING_REQUEST_TIMEOUT_MS = 15_000;

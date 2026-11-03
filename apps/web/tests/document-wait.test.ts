@@ -45,12 +45,32 @@ void test('document reading stays visible and the original turn resumes when ind
   await setImmediate();
   assert.equal(store.getState().generatingChatId, chat.id);
   assert.equal(store.getState().messagesByChatId[chat.id]?.at(-1)?.content, '');
-  controller.enqueue(encode('status', { phase: 'answering', documentIds: [document.id] }));
+  const readyVersion = '2026-11-03T10:00:00.000Z';
+  controller.enqueue(
+    encode('status', {
+      phase: 'answering',
+      documentIds: [document.id],
+      documentVersions: [{ id: document.id, updatedAt: readyVersion }],
+    }),
+  );
   controller.enqueue(encode('sources', []));
   controller.enqueue(encode('token', { text: 'The indexed document says…' }));
   controller.enqueue(encode('done', { assistantMessageId: 'answer', citations: [] }));
   await waitForIdle(store);
   assert.equal(store.getState().documentsById[document.id]?.status, 'ready');
+  store.getState().setDocument({
+    ...document,
+    status: 'processing',
+    updatedAt: '2026-11-03T09:59:59.000Z',
+  });
+  assert.equal(store.getState().documentsById[document.id]?.status, 'ready');
+  assert.equal(store.getState().documentsById[document.id]?.updatedAt, readyVersion);
+  store.getState().setDocument({
+    ...document,
+    status: 'pending',
+    updatedAt: '2026-11-03T10:00:01.000Z',
+  });
+  assert.equal(store.getState().documentsById[document.id]?.status, 'pending');
   assert.equal(store.getState().messagesByChatId[chat.id]?.length, 2);
   assert.equal(
     store.getState().messagesByChatId[chat.id]?.at(-1)?.content,
@@ -77,6 +97,6 @@ void test('stopping document reading cancels the stream and clears the loading p
 
 void test('the reading indicator exposes its visible label through a status region', () => {
   const html = renderToStaticMarkup(createElement(TypingIndicator, { readingDocuments: true }));
-  assert.match(html, /Reading documents…/u);
+  assert.match(html, /Preparing documents…/u);
   assert.match(html, /role="status"/u);
 });

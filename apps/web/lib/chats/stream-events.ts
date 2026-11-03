@@ -18,6 +18,9 @@ const eventSchema = z.discriminatedUnion('event', [
     data: z.object({
       phase: z.enum(['reading_documents', 'answering']),
       documentIds: z.array(z.string()),
+      documentVersions: z
+        .array(z.object({ id: z.string(), updatedAt: z.iso.datetime() }))
+        .optional(),
     }),
   }),
   z.object({ event: z.literal('token'), data: z.object({ text: z.string() }) }),

@@ -17,7 +17,8 @@ export const saveChunks = async (
     // The conditional update locks the ingestion version until all chunks commit.
     const claimed = await tx.execute<{ id: string }>(sql`with claimed as (
       update ${document} set status = 'ready', page_count = ${pageCount},
-        chunk_count = ${values.length}, error_message = null, updated_at = clock_timestamp()
+        chunk_count = ${values.length}, error_message = null, processing_progress = null,
+        updated_at = clock_timestamp()
       where id = ${row.id} and status = 'processing' and updated_at = ${row.updatedAt.toISOString()}
       returning id
     ), removed as (

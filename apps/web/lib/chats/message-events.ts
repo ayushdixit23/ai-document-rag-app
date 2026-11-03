@@ -26,7 +26,7 @@ export function applyMessageEvent(
     case 'status':
       patch({ phase: event.data.phase });
       if (event.data.phase === 'answering')
-        setDocumentStatus(store, event.data.documentIds, 'ready');
+        setDocumentStatus(store, event.data.documentIds, 'ready', event.data.documentVersions);
       break;
     case 'token': {
       const current = messages.find((message) => message.id === ids.assistant);

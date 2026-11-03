@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { z } from 'zod';
 
 dotenv.config();
 
@@ -37,7 +38,22 @@ export const getR2Config = () => ({
 export const GEMINI_API_KEY = getEnvVariable('GEMINI_API_KEY');
 export const GEMINI_CHAT_MODEL = getEnvVariable('GEMINI_CHAT_MODEL', 'gemini-2.5-flash');
 export const GEMINI_FAST_MODEL = getEnvVariable('GEMINI_FAST_MODEL', 'gemini-2.5-flash-lite');
-export const GEMINI_EMBED_MODEL = getEnvVariable('GEMINI_EMBED_MODEL', 'gemini-embedding-001');
+export const GEMINI_EMBED_MODEL = getEnvVariable('GEMINI_EMBED_MODEL', 'gemini-embedding-2');
+// Leave capacity for interactive queries under the observed 100-input free-tier allowance.
+export const GEMINI_EMBED_INPUTS_PER_MINUTE = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(100_000)
+  .parse(getEnvVariable('GEMINI_EMBED_INPUTS_PER_MINUTE', '96'));
+export const PINECONE_API_KEY = process.env.PINECONE_API_KEY?.trim() ?? '';
+export const PINECONE_RERANK_BUDGET_SCOPE = getEnvVariable(
+  'PINECONE_RERANK_BUDGET_SCOPE',
+  'askdocs-bge-reranker-v2-m3',
+);
+export const RAG_RETRIEVAL_MODE = z
+  .enum(['vector', 'hybrid', 'hybrid_rerank'])
+  .parse(getEnvVariable('RAG_RETRIEVAL_MODE', 'hybrid_rerank'));
 
 // CORS Configuration
 export const ALLOWED_ORIGINS = getEnvVariable(

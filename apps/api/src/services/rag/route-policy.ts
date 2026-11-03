@@ -15,11 +15,13 @@ export interface RouteDecision {
   fallback?: boolean;
 }
 
+export const ROUTER_TIMEOUT_MS = 8_000;
+
 export const routeWithFallback = async (
   input: RouteInput,
   generate: (signal: AbortSignal) => Promise<RouteDecision>,
   onFallback: (error: unknown) => void,
-  timeoutMs = 3_000,
+  timeoutMs = ROUTER_TIMEOUT_MS,
 ): Promise<RouteDecision> => {
   try {
     return await withDeadline(generate, input.signal, timeoutMs);

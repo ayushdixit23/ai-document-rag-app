@@ -2,6 +2,7 @@ import {
   bigint,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -20,6 +21,13 @@ export const documentStatusEnum = pgEnum('document_status', [
   'ready',
   'failed',
 ]);
+
+export interface ProcessingProgress {
+  stage: 'embedding' | 'waiting' | 'saving';
+  completed: number;
+  total: number;
+  retryAt?: string;
+}
 
 export const message = pgTable(
   'message',
@@ -60,6 +68,7 @@ export const document = pgTable(
     errorMessage: text('error_message'),
     pageCount: integer('page_count'),
     chunkCount: integer('chunk_count'),
+    processingProgress: jsonb('processing_progress').$type<ProcessingProgress>(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 
     updatedAt: timestamp('updated_at')

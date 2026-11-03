@@ -3,6 +3,7 @@ import type { BaseMessage } from '@langchain/core/messages';
 import { logger } from '../../utils/logger.js';
 import { saveAssistantMessage } from '../chats/message.repository.js';
 import { getAttachments, publicDocument } from '../documents/document.repository.js';
+import { estimateTokens } from './history.js';
 import { enqueueSummary } from './jobs.js';
 import { chatModel } from './models.js';
 import type { PreparedTurn } from './prepare-turn.js';
@@ -18,6 +19,15 @@ const streamAnswer = async function* (
   chatId: string,
 ) {
   const started = performance.now();
+  logger.debug(
+    {
+      chatId,
+      model: chatModel.model,
+      promptMessages: messages.length,
+      promptTokens: messages.reduce((sum, message) => sum + estimateTokens(message.text), 0),
+    },
+    'Answer prompt size',
+  );
   let first = true;
   const chunks = await timeStage('open model stream', { chatId }, () =>
     chatModel.stream(messages, { signal }),

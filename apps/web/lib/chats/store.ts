@@ -9,6 +9,7 @@ import { messageActions } from '@/lib/chats/message-actions';
 import { initialChatState, withoutKey } from '@/lib/chats/store-helpers';
 import type { ChatStore, ChatStoreApi, StoreRuntime } from '@/lib/chats/store-types';
 import { threadActions } from '@/lib/chats/thread-actions';
+import { reconcileDocument } from '@/lib/documents/reconcile';
 
 export function createChatStore() {
   const runtime: StoreRuntime = {
@@ -26,7 +27,10 @@ export function createChatStore() {
       ...threadActions(access, runtime),
       ...messageActions(access, runtime),
       setDocument: (document) => {
-        set({ documentsById: { ...get().documentsById, [document.id]: document } });
+        const documents = get().documentsById;
+        const next = reconcileDocument(documents[document.id], document);
+        if (next !== documents[document.id])
+          set({ documentsById: { ...documents, [document.id]: next } });
       },
       removeDocument: (id) => {
         set({

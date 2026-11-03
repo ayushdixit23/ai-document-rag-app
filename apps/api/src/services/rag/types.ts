@@ -11,7 +11,11 @@ export type Citation = Omit<Source, 'chunkId'>;
 
 export interface StreamEvents {
   meta: { userMessageId: string; processingDocumentIds: string[] };
-  status: { phase: 'reading_documents' | 'answering'; documentIds: string[] };
+  status: {
+    phase: 'reading_documents' | 'answering';
+    documentIds: string[];
+    documentVersions?: { id: string; updatedAt: string }[];
+  };
   sources: { n: number; documentId: string; title: string; page: number | null }[];
   token: { text: string };
   done: { assistantMessageId: string; citations: Citation[] };

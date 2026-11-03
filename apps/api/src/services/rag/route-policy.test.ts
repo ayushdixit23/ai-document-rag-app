@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { setTimeout } from 'node:timers/promises';
 
 import { lowLatencyThinking } from './model-options.js';
 import { makeTurn } from './query-pipeline.fixtures.js';
-import { type RouteInput, routeWithFallback } from './route-policy.js';
+import { type RouteInput, ROUTER_TIMEOUT_MS, routeWithFallback } from './route-policy.js';
 
 const input = (): RouteInput => ({
   content: 'What about its costs?',
@@ -20,6 +21,17 @@ void test('successful topic switches pass through without fallback', async () =>
     input(),
     () => Promise.resolve(expected),
     () => assert.fail(),
+  );
+  assert.deepEqual(result, expected);
+});
+
+void test('routing can complete beyond the former one-second cutoff within its eight-second limit', async () => {
+  assert.equal(ROUTER_TIMEOUT_MS, 8_000);
+  const expected = { route: 'documents' as const, standaloneQuery: 'Merger costs' };
+  const result = await routeWithFallback(
+    input(),
+    () => setTimeout(1_100, expected),
+    () => assert.fail('A normal response must not be discarded after one second'),
   );
   assert.deepEqual(result, expected);
 });

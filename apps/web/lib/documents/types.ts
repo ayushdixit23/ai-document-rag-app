@@ -1,5 +1,12 @@
 export type DocumentStatus = 'uploading' | 'pending' | 'processing' | 'ready' | 'failed';
 
+export type ProcessingProgress = {
+  stage: 'embedding' | 'waiting' | 'saving';
+  completed: number;
+  total: number;
+  retryAt?: string;
+};
+
 export type ChatDocument = {
   id: string;
   name: string;
@@ -9,6 +16,8 @@ export type ChatDocument = {
   errorMessage: string | null;
   pageCount: number | null;
   chunkCount: number | null;
+  processingProgress?: ProcessingProgress | null;
+  updatedAt?: string;
 };
 
 export type UploadReservation = {

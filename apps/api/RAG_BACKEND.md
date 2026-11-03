@@ -1,12 +1,13 @@
 # RAG backend
 
-Implements [Part 2](../../rag-part-2-backend.plan.md), following the product behavior in [RAG.md](../../RAG.md).
+Document ingestion, grounded chat, streaming, citations, and background memory. See
+[hybrid retrieval and reranking](./RETRIEVAL.md) for search configuration and the local fallback.
 
 ## Setup
 
 1. Run `pnpm install` at the repository root.
 2. Configure `apps/api/.env` using `env.example`. PostgreSQL needs `vector`. Set `DATABASE_URL_DIRECT` to the direct connection for pg-boss; ordinary PostgreSQL can use the `DATABASE_URL` fallback.
-3. Apply the schema with `pnpm --filter api db:push` for the existing local workflow. Migration-managed deployments use `pnpm --filter api db:migrate` instead. Migration `0004_minor_diamondback.sql` adds the summary message cursor.
+3. Apply migrations with `pnpm --filter api db:migrate`. Migrations 0006–0009 add hybrid search, the atomic quota function, processing progress, and the embedding cache. Existing `db:push` users must also apply the custom function from migration 0007; it is not represented by a Drizzle table schema.
 4. Configure private R2 bucket CORS: web origins, method `PUT`, allowed header `Content-Type`, exposed header `ETag`. The existing `configureBucketCors()` in `src/lib/storage/r2.ts` applies `ALLOWED_ORIGINS`.
 5. Run `pnpm dev`. API port: **5001**. Startup registers ingestion, summary, and ten-minute cleanup workers. The database role must be able to create pg-boss's schema and tables.
 
@@ -51,7 +52,7 @@ Uploads accept 1–5 PDF, DOCX, UTF-8 TXT/MD/CSV, or XLSX files of at most 10 Mi
 
 Messages need text or attachments, with at most five distinct document IDs. Attachments must belong to the user and have completed uploading. Previously attached files remain in the chat scope. Pending/processing files appear in `meta`; failed files remain visible for retry/delete.
 
-SSE order: `meta`, `sources`, zero or more `token`, then `done` or `error`. `sources` is an array of `{ n, documentId, title, page }`. `done` contains `{ assistantMessageId, citations }`; citations also include snippets. Invalid citation ordinals are never persisted. Failed/disconnected generations keep the user message without saving a partial assistant message. Heartbeats run every 15 seconds; the stream deadline is five minutes.
+SSE order: `meta`, optional document `status` updates, `sources`, zero or more `token`, then `done` or `error`. `status` uses `reading_documents` / `answering`; readiness includes `documentVersions: [{ id, updatedAt }]` so delayed browser polls cannot regress file state. Every newly attached file must be `ready` before invoking the answer model, including for a general routing decision. Failed or missing new files stop the turn. The progress connection can stay open during indexing. `sources` is an array of `{ n, documentId, title, page }`. `done` contains `{ assistantMessageId, citations }`; citations also include snippets. Invalid citation ordinals are never persisted. Failed/disconnected generations keep the user message without saving a partial assistant message. Heartbeats run every 15 seconds; the stream deadline is five minutes.
 
 Ingestion transitions `uploading → pending → processing → ready | failed`; retry uses `failed → pending`. Cleanup removes uploads older than one hour and requeues pending documents to recover a crash between status update and enqueue. Processing abandoned for over one hour is reclaimed; the original attempt cannot overwrite a newer attempt.
 

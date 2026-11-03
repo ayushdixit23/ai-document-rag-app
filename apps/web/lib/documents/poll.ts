@@ -4,7 +4,7 @@ import { type ChatDocument, isDocumentProcessing } from '@/lib/documents/types';
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_FAILURES = 3;
 
-function waitForPoll(signal: AbortSignal): Promise<void> {
+function waitForPoll(signal: AbortSignal, delay: number): Promise<void> {
   return new Promise((resolve, reject) => {
     signal.throwIfAborted();
     const abort = () => {
@@ -14,7 +14,7 @@ function waitForPoll(signal: AbortSignal): Promise<void> {
     const timer = setTimeout(() => {
       signal.removeEventListener('abort', abort);
       resolve();
-    }, POLL_INTERVAL_MS);
+    }, delay);
     signal.addEventListener('abort', abort, { once: true });
   });
 }
@@ -26,8 +26,10 @@ export async function pollDocument(
 ): Promise<void> {
   let document = initial;
   let failures = 0;
+  let polls = 0;
   while (isDocumentProcessing(document.status)) {
-    await waitForPoll(signal);
+    await waitForPoll(signal, Math.min(POLL_INTERVAL_MS + polls * 500, 5_000));
+    polls += 1;
     try {
       document = (await fetchDocument(document.id, signal)).document;
       signal.throwIfAborted();

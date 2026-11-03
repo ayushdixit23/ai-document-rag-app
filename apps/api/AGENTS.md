@@ -37,7 +37,7 @@ npm run format
 - Drizzle + `postgres` (postgres.js) — `DATABASE_PREPARE_STATEMENTS` defaults to false.
   Enable only after verifying protocol preparation support (current Neon PgBouncer supports it).
   Drizzle's `unsafe()` calls need the adapter in `src/db/prepared-queries.ts` to opt in.
-- DB scripts: `pnpm db:push` / `pnpm db:generate` / `pnpm db:migrate` / `pnpm db:studio` / `pnpm db:clear`
+- DB scripts: `pnpm db:push` / `pnpm db:generate` / `pnpm db:migrate` / `pnpm db:studio` / `pnpm db:clear` / `pnpm db:clear:chats`
 
 ## Repository Structure
 

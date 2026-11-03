@@ -6,12 +6,12 @@ import { getObject } from '../../../lib/storage/r2.js';
 import { logger } from '../../../utils/logger.js';
 import { objectRef, type StoredDocument } from '../../documents/document.repository.js';
 import { getFileKind } from '../../documents/file-types.js';
-import { embeddings } from '../models.js';
 import { timeStage } from '../timing.js';
-import { embedChunks } from './embed-chunks.js';
+import { embedDocument } from './embed-document.js';
 import { assertMagicBytes } from './file-validation.js';
 import { IngestError } from './ingest-error.js';
 import { loadAndSplit } from './load-document.js';
+import { writeIngestProgress } from './progress.js';
 import { saveChunks } from './save-chunks.js';
 
 const processDocument = async (row: StoredDocument): Promise<void> => {
@@ -23,9 +23,18 @@ const processDocument = async (row: StoredDocument): Promise<void> => {
   const bytes = await object.Body.transformToByteArray();
   await assertMagicBytes(bytes, kind);
   const { chunks, pageCount } = await loadAndSplit(bytes, kind);
-  const values = await timeStage('ingest embed', { documentId: row.id }, () =>
-    embedChunks(row, chunks, (texts) => embeddings.embedDocuments(texts)),
+  logger.debug(
+    { documentId: row.id, pages: pageCount, chunks: chunks.length },
+    'Document indexing started',
   );
+  const values = await timeStage('ingest embed', { documentId: row.id }, () =>
+    embedDocument(row, chunks),
+  );
+  await writeIngestProgress(row, {
+    stage: 'saving',
+    completed: chunks.length,
+    total: chunks.length,
+  });
   await timeStage('ingest save chunks', { documentId: row.id }, () =>
     saveChunks(row, values, pageCount),
   );
@@ -34,7 +43,7 @@ const processDocument = async (row: StoredDocument): Promise<void> => {
 export const ingestDocument = async (documentId: string): Promise<void> => {
   const [row] = await db
     .update(document)
-    .set({ status: 'processing', errorMessage: null })
+    .set({ status: 'processing', errorMessage: null, processingProgress: null })
     .where(and(eq(document.id, documentId), eq(document.status, 'pending')))
     .returning();
   if (!row) return;
@@ -46,6 +55,7 @@ export const ingestDocument = async (documentId: string): Promise<void> => {
       .update(document)
       .set({
         status: 'failed',
+        processingProgress: null,
         errorMessage:
           error instanceof IngestError
             ? error.message.slice(0, 500)

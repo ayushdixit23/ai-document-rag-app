@@ -55,7 +55,11 @@ void test('processing documents are reported, refreshed, and then used for the a
     harness.events.filter((item) => item.event === 'status').map((item) => item.data),
     [
       { phase: 'reading_documents', documentIds: ['doc'] },
-      { phase: 'answering', documentIds: ['doc'] },
+      {
+        phase: 'answering',
+        documentIds: ['doc'],
+        documentVersions: [{ id: 'doc', updatedAt: new Date(0).toISOString() }],
+      },
     ],
   );
 });

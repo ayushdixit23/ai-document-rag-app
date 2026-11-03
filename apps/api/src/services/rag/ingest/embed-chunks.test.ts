@@ -38,3 +38,26 @@ void test('incomplete, non-finite, or dimensionally invalid embeddings never rea
       /embedding response/iu,
     );
 });
+
+void test('completed chunks advance monotonically, including batches that finish out of order', async () => {
+  const progress: number[] = [];
+  const chunks = Array.from(
+    { length: 162 },
+    (_, index) => new Document({ pageContent: String(index) }),
+  );
+  await embedChunks(
+    { id: 'doc', userId: 'owner' },
+    chunks,
+    async (texts) => {
+      await new Promise((resolve) => setTimeout(resolve, texts[0] === '0' ? 5 : 1));
+      return texts.map(() => Array<number>(EMBEDDING_DIMENSIONS).fill(0.1));
+    },
+    {
+      onProgress: (completed) => {
+        progress.push(completed);
+        return Promise.resolve();
+      },
+    },
+  );
+  assert.deepEqual(progress, [48, 96, 144, 162]);
+});

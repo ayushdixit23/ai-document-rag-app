@@ -62,4 +62,15 @@ void test('a contextual fast follow-up requires stored citations, not citation-s
   assert.ok(answer);
   answer.hasCitations = true;
   assert.match(quickRoute(input)?.standaloneQuery ?? '', /report risks/u);
+  const question = input.history[0];
+  assert.ok(question);
+  input.history[0] = { ...question, content: 'Explain information retrieval methods' };
+  input.content = 'Give examples';
+  assert.equal(quickRoute(input)?.route, 'documents');
+  input.content = 'How do information retrieval systems use ranking?';
+  assert.equal(quickRoute(input)?.route, 'documents');
+  input.content = "New topic: let's talk about JavaScript";
+  assert.equal(quickRoute(input)?.route, 'general');
+  input.content = 'Explain JavaScript';
+  assert.equal(quickRoute(input), undefined);
 });

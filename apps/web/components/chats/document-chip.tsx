@@ -5,7 +5,8 @@ import { CircleAlert, FileText, Loader2 } from 'lucide-react';
 
 import { RemoveBadge, RetryButton } from '@/components/chats/document-chip-actions';
 import { fileTypeLabel, formatFileSize } from '@/lib/documents/format';
-import type { DocumentStatus } from '@/lib/documents/types';
+import { processingLabel } from '@/lib/documents/progress';
+import type { DocumentStatus, ProcessingProgress } from '@/lib/documents/types';
 
 const STATUS_LABEL: Record<DocumentStatus, string | null> = {
   uploading: 'Uploading…',
@@ -21,6 +22,7 @@ type DocumentChipProps = {
   name: string;
   size: number;
   status: DocumentStatus;
+  progress?: ProcessingProgress | null;
   error?: string;
   disabled?: boolean;
   /** Show the remove badge only on hover/focus (sent messages); always visible when false. */
@@ -37,17 +39,28 @@ function ChipIcon({ status }: { status: DocumentStatus }) {
   return <FileText className="size-4" aria-hidden />;
 }
 
+function chipDetail({
+  name,
+  size,
+  status,
+  progress,
+}: Pick<DocumentChipProps, 'name' | 'size' | 'status' | 'progress'>) {
+  if (status === 'processing') return processingLabel(progress);
+  return [STATUS_LABEL[status] ?? fileTypeLabel(name), formatFileSize(size)].join(' · ');
+}
+
 export function DocumentChip({
   name,
   size,
   status,
+  progress,
   error,
   disabled,
   revealRemoveOnHover = false,
   onRetry,
   onRemove,
 }: DocumentChipProps) {
-  const detail = [STATUS_LABEL[status] ?? fileTypeLabel(name), formatFileSize(size)].join(' · ');
+  const detail = chipDetail({ name, size, status, progress });
   const canRetry = (status === 'failed' || Boolean(error)) && onRetry;
   return (
     <div className="group/chip relative w-60 max-w-full">
@@ -67,7 +80,11 @@ export function DocumentChip({
           >
             {name}
           </span>
-          <span role="status" className="text-muted-foreground mt-0.5 block truncate text-xs">
+          <span
+            role="status"
+            title={detail}
+            className="text-muted-foreground mt-0.5 block truncate text-xs"
+          >
             {detail}
           </span>
         </span>

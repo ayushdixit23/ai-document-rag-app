@@ -17,8 +17,12 @@ export const db = drizzle(client, { schema });
 
 export const connectDb = async (): Promise<void> => {
   try {
-    await client`SELECT 1`;
-    logger.info({ poolMax: DATABASE_POOL_MAX }, 'PostgreSQL connection established successfully');
+    const warmConnections = Math.min(DATABASE_POOL_MAX, 4);
+    await Promise.all(Array.from({ length: warmConnections }, () => client`SELECT 1`));
+    logger.info(
+      { poolMax: DATABASE_POOL_MAX, warmConnections },
+      'PostgreSQL connection established successfully',
+    );
   } catch (error) {
     logger.fatal({ err: error }, 'PostgreSQL connection failed');
     process.exit(1);

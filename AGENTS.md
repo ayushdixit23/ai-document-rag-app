@@ -54,10 +54,6 @@ packages/
 4. From `apps/api`: `pnpm db:push` to apply the Drizzle schema.
 5. `pnpm dev`
 
-## Product
-
-- **Chat and documents** — `RAG.md` is the product source of truth. Users can ask with documents or without them. Agents must read `RAG.md` before changing chat, message, document, retrieval, or citation behavior.
-
 ## Key Conventions
 
 ### API (see `apps/api/AGENTS.md` for full detail)

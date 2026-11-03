@@ -17,6 +17,7 @@ function StoredDocumentChip({ document }: { document: ChatDocument }) {
         name={document.name}
         size={document.size}
         status={document.status}
+        progress={document.processingProgress}
         error={controls.error ?? document.errorMessage ?? undefined}
         disabled={controls.pending}
         revealRemoveOnHover

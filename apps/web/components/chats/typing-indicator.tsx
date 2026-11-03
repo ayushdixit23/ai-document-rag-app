@@ -2,7 +2,7 @@ export function TypingIndicator({ readingDocuments = false }: { readingDocuments
   return (
     <div role="status" className="flex h-6 items-center gap-1.5">
       {readingDocuments ? (
-        <span className="text-muted-foreground text-sm">Reading documents…</span>
+        <span className="text-muted-foreground text-sm">Preparing documents…</span>
       ) : (
         <span className="sr-only">Thinking of an answer</span>
       )}
